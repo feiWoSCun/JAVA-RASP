@@ -15,8 +15,8 @@ import java.security.CodeSource;
  * @author vlinux on 15/5/19.
  */
 public class AgentBootstrap {
-    private static final String ARTHAS_CORE_JAR = "arthas-core.jar";
-    private static final String ARTHAS_BOOTSTRAP = "com.taobao.arthas.core.server.ArthasBootstrap";
+    private static final String RASP_CORE_JAR = "core.jar";
+    private static final String RASP_BOOTSTRAP = "com.endpoint.rasp.engine.bootstrap.RaspBootstrap";
     private static final String GET_INSTANCE = "getInstance";
     private static final String IS_BIND = "isBind";
 
@@ -120,7 +120,7 @@ public class AgentBootstrap {
                         File arthasAgentJarFile = new File(codeSource.getLocation().toURI().getSchemeSpecificPart());
 
                         // 在 arthas-agent.jar 所在的目录中查找 arthas-core.jar
-                        arthasCoreJarFile = new File(arthasAgentJarFile.getParentFile(), ARTHAS_CORE_JAR);
+                        arthasCoreJarFile = new File(arthasAgentJarFile.getParentFile(), RASP_CORE_JAR);
 
                         // 如果在 arthas-agent.jar 目录中也找不到 arthas-core.jar
                         if (!arthasCoreJarFile.exists()) {
@@ -177,7 +177,7 @@ public class AgentBootstrap {
          * ArthasBootstrap bootstrap = ArthasBootstrap.getInstance(inst);
          * </pre>
          */
-        Class<?> bootstrapClass = agentLoader.loadClass(ARTHAS_BOOTSTRAP);
+        Class<?> bootstrapClass = agentLoader.loadClass(RASP_BOOTSTRAP);
         Object bootstrap = bootstrapClass.getMethod(GET_INSTANCE, Instrumentation.class, String.class).invoke(null, inst, args);
         boolean isBind = (Boolean) bootstrapClass.getMethod(IS_BIND).invoke(bootstrap);
         if (!isBind) {

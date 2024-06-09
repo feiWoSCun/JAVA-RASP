@@ -14,8 +14,6 @@ import com.sun.tools.attach.VirtualMachine;
 import com.sun.tools.attach.VirtualMachineDescriptor;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -93,7 +91,7 @@ public class Core {
             CONFIG.setCorePath();
             try {
                 virtualMachine.loadAgent(CONFIG.getAgentPath(),
-                        CONFIG.getCorePath() +";" + CONFIG.toString());
+                        CONFIG.getCorePath() +";" + CONFIG.getAgentPath());
             } catch (IOException e) {
                 if (e.getMessage() != null && e.getMessage().contains("Non-numeric value found")) {
                     AnsiLog.warn(e);
