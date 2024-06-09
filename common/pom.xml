@@ -6,12 +6,12 @@
         <artifactId>e-rasp-renew</artifactId>
         <version>fei-1.0</version>
     </parent>
-    <artifactId>agent</artifactId>
+    <artifactId>common</artifactId>
+    <name>common</name>
     <packaging>jar</packaging>
-    <name>agent</name>
     <dependencies>
     </dependencies>
     <build>
-        <finalName>agent</finalName>
+        <finalName>common</finalName>
     </build>
 </project>

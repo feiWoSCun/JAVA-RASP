@@ -76,7 +76,7 @@ public class ProcessUtils {
         return FOUND_JAVA_HOME;
     }
 
-    public static void startArthasCore(long targetPid, List<String> commands) {
+    public static void startArthasCore(String targetPid, List<String> commands) {
         // find java/java.exe, then try to find tools.jar
         String javaHome = findJavaHome();
 
@@ -101,6 +101,7 @@ public class ProcessUtils {
         if (toolsJar != null && toolsJar.exists()) {
             commands.add("-Xbootclasspath/a:" + toolsJar.getAbsolutePath());
         }
+
         // "${JAVA_HOME}"/bin/java \
         // ${opts} \
         // -jar "${arthas_lib_dir}/arthas-core.jar" \
@@ -113,7 +114,9 @@ public class ProcessUtils {
         command.addAll(commands);
         ProcessBuilder pb = new ProcessBuilder(command);
         // https://github.com/alibaba/arthas/issues/2166
-       pb.environment().put("JAVA_TOOL_OPTIONS", "");
+        command.add("-pid");
+        command.add(targetPid);
+        pb.environment().put("JAVA_TOOL_OPTIONS", "");
         try {
             final Process proc = pb.start();
             Thread redirectStdout = new Thread(() -> {

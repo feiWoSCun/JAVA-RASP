@@ -8,6 +8,7 @@
     <module>boot</module>
     <module>agent</module>
     <module>core</module>
+    <module>common</module>
   </modules>
   <version>fei-1.0</version>
   <name>e-rasp-renew</name>

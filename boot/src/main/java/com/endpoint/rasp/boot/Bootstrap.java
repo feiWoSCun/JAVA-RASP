@@ -8,14 +8,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Bootstrap {
-    private static final String JAR = "-jar";
     private static final File RASP_HOME_DIR;
+    private static final String JAR = "-jar";
+    private static final String CORE = "-core";
+    public static final String AGENT = "-agent";
     private static final String CORE_NAME = "rasp-core-shade.jar";
+    private static final String AGENT_JAR = "agent.jar";
 
     static {
         CodeSource codeSource = Bootstrap.class.getProtectionDomain().getCodeSource();
 
-        File bootJarPath = null;
+        File bootJarPath;
         try {
             bootJarPath = new File(codeSource.getLocation().toURI().getSchemeSpecificPart());
             RASP_HOME_DIR = bootJarPath.getParentFile();
@@ -25,13 +28,25 @@ public class Bootstrap {
     }
 
     public static void main(String[] args) {
+        new Bootstrap().startBoot(args);
+    }
+
+    private void startBoot(String[] args) {
         final List<String> command = new ArrayList<>();
         //组装java -jar path/core.jar
         final String corePath = new File(RASP_HOME_DIR, CORE_NAME).getAbsolutePath();
         System.out.println(corePath);
+        setCommand(command, corePath);
+        ProcessUtils.startArthasCore(args[0], command);
+    }
+
+    private void setCommand(List<String> command, String corePath) {
         command.add(JAR);
         command.add(corePath);
-        ProcessUtils.startArthasCore(Long.parseLong(args[0]), command);
+        command.add(CORE);
+        command.add(corePath);
+        command.add(AGENT);
+        command.add(new File(RASP_HOME_DIR, AGENT_JAR).getAbsolutePath());
     }
 
 

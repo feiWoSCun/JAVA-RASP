@@ -11,6 +11,11 @@
     <name>core</name>
 
     <dependencies>
+        <dependency>
+            <groupId>com.endpoint.rasp</groupId>
+            <artifactId>common</artifactId>
+            <version>fei-1.0</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
