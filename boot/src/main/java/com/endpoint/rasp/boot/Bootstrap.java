@@ -6,7 +6,12 @@ import java.net.URISyntaxException;
 import java.security.CodeSource;
 import java.util.ArrayList;
 import java.util.List;
-
+/**
+ * @author: feiwoscun
+ * @date: 2024/6/9
+ * @email: 2825097536@qq.com
+ * @description:
+ */
 public class Bootstrap {
     private static final File RASP_HOME_DIR;
     private static final String JAR = "-jar";

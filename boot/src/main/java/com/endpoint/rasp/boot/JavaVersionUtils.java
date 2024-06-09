@@ -3,9 +3,10 @@ package com.endpoint.rasp.boot;
 import java.util.Properties;
 
 /**
- *
- * @author hengyunabc 2018-11-21
- *
+ * @author: feiwoscun
+ * @date: 2024/6/9
+ * @email: 2825097536@qq.com
+ * @description:
  */
 public class JavaVersionUtils {
     private static final String VERSION_PROP_NAME = "java.specification.version";

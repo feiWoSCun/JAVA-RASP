@@ -10,9 +10,10 @@ import java.net.URLDecoder;
 import java.security.CodeSource;
 
 /**
- * 代理启动类
- *
- * @author vlinux on 15/5/19.
+ * @author: feiwoscun
+ * @date: 2024/6/9
+ * @email: 2825097536@qq.com
+ * @description:
  */
 public class AgentBootstrap {
     private static final String RASP_CORE_JAR = "core.jar";

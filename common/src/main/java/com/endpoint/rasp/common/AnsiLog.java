@@ -14,10 +14,11 @@ import java.util.regex.Matcher;
  * WARNING -> WARN
  * SEVERE  -> ERROR
  * </pre>
- *
- * @see org.slf4j.bridge.SLF4JBridgeHandler
- * @author hengyunabc 2017-05-03
- *
+ /**
+ * @author: feiwoscun
+ * @date: 2024/6/9
+ * @email: 2825097536@qq.com
+ * @description:
  */
 public abstract class AnsiLog {
 

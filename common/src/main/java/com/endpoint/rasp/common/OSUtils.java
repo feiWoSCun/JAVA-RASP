@@ -3,9 +3,10 @@ import java.io.File;
 import java.util.Locale;
 
 /**
- *
- * @author hengyunabc 2018-11-08
- *
+ * @author: feiwoscun
+ * @date: 2024/6/9
+ * @email: 2825097536@qq.com
+ * @description:
  */
 public class OSUtils {
     private static final String OPERATING_SYSTEM_NAME = System.getProperty("os.name").toLowerCase(Locale.ENGLISH);
