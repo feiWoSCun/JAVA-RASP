@@ -90,11 +90,16 @@ public class Core {
                             targetSystemProperties.getProperty("java.home"), System.getProperty("java.home"));
                 }
             }
-            CONFIG.setAgentPath();
-            CONFIG.setCorePath();
+            System.out.println("feiwoscun:"+CONFIG.getAgentPath());
+            //CONFIG.setAgentPath();
+            //CONFIG.setCorePath();
             try {
-                virtualMachine.loadAgent(CONFIG.getAgentPath(),
-                        CONFIG.getCorePath() +";" + CONFIG.getAgentPath());
+                String agentPath1 = CONFIG.getAgentPath();
+                System.out.println("feiwoscun:"+ agentPath1);
+
+                String agentPath = agentPath1;
+                String corePath = CONFIG.getCorePath();
+                virtualMachine.loadAgent(agentPath,corePath +";" + agentPath1);
             } catch (IOException e) {
                 if (e.getMessage() != null && e.getMessage().contains("Non-numeric value found")) {
                     AnsiLog.warn(e);

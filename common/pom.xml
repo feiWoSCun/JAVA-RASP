@@ -10,6 +10,7 @@
     <name>common</name>
     <packaging>jar</packaging>
     <dependencies>
+
     </dependencies>
     <build>
         <finalName>common</finalName>

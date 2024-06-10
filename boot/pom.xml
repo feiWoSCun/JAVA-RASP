@@ -11,6 +11,11 @@
     <name>attach</name>
     <dependencies>
         <dependency>
+            <groupId>com.endpoint.rasp</groupId>
+            <artifactId>common</artifactId>
+            <version>fei-1.0</version>
+        </dependency>
+        <dependency>
             <groupId>com.github.olivergondza</groupId>
             <artifactId>maven-jdk-tools-wrapper</artifactId>
             <version>0.1</version>
@@ -19,6 +24,6 @@
         </dependency>
     </dependencies>
     <build>
-        <finalName>attach</finalName>
+        <finalName>boot</finalName>
     </build>
 </project>

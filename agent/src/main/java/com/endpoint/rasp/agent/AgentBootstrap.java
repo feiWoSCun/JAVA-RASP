@@ -17,7 +17,7 @@ import java.security.CodeSource;
  */
 public class AgentBootstrap {
     private static final String RASP_CORE_JAR = "core.jar";
-    private static final String RASP_BOOTSTRAP = "com.endpoint.rasp.engine.bootstrap.RaspBootstrap";
+    private static final String RASP_BOOTSTRAP = "com.endpoint.rasp.engine.RaspBootstrap";
     private static final String GET_INSTANCE = "getInstance";
     private static final String IS_BIND = "isBind";
 
@@ -87,6 +87,7 @@ public class AgentBootstrap {
 
     private static synchronized void main(String args, final Instrumentation inst) {
         try {
+            System.out.println("Starting Rasp Agent");
             ps.println("rasp server agent start...");
             // 传递的args参数分两个部分:raspCoreJar路径和agentArgs, 分别是Agent的JAR包路径和期望传递到服务端的参数
             if (args == null) {
@@ -180,13 +181,13 @@ public class AgentBootstrap {
          */
         Class<?> bootstrapClass = agentLoader.loadClass(RASP_BOOTSTRAP);
         Object bootstrap = bootstrapClass.getMethod(GET_INSTANCE, Instrumentation.class, String.class).invoke(null, inst, args);
-        boolean isBind = (Boolean) bootstrapClass.getMethod(IS_BIND).invoke(bootstrap);
+       /* boolean isBind = (Boolean) bootstrapClass.getMethod(IS_BIND).invoke(bootstrap);
         if (!isBind) {
             String errorMsg = "rasp server port binding failed! Please check $HOME/logs/rasp/rasp.log for more details.";
             ps.println(errorMsg);
             throw new RuntimeException(errorMsg);
         }
-        ps.println("rasp server already bind.");
+        ps.println("rasp server already bind.");*/
     }
 
     private static String decodeArg(String arg) {

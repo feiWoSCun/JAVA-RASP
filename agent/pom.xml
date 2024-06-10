@@ -12,7 +12,7 @@
     <dependencies>
     </dependencies>
     <build>
-        <finalName>arthas-agent</finalName>
+        <finalName>agent1</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -25,8 +25,11 @@
                         <phase>package</phase>
                         <configuration>
                             <descriptorRefs>
-                                <descriptorRef>jar-with-dependencies</descriptorRef>
+                                <descriptorRef>
+                                    jar-with-dependencies
+                                </descriptorRef>
                             </descriptorRefs>
+                            <appendAssemblyId>false</appendAssemblyId>
                             <archive>
                                 <manifestEntries>
                                     <Premain-Class>com.endpoint.rasp.agent.AgentBootstrap</Premain-Class>
@@ -39,6 +42,7 @@
                                     <Implementation-Version>${project.version}</Implementation-Version>
                                 </manifestEntries>
                             </archive>
+                            <finalName>agent</finalName>
                         </configuration>
                     </execution>
                 </executions>

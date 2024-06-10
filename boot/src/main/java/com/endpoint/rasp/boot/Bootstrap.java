@@ -33,6 +33,12 @@ public class Bootstrap {
     }
 
     public static void main(String[] args) {
+        //debug用
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
         new Bootstrap().startBoot(args);
     }
 

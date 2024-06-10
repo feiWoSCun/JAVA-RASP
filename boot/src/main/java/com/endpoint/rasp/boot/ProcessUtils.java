@@ -1,5 +1,7 @@
 package com.endpoint.rasp.boot;
 
+import com.endpoint.rasp.common.AnsiLog;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -102,7 +104,7 @@ public class ProcessUtils {
         command.add(javaPath.getAbsolutePath());
 
         if (toolsJar != null && toolsJar.exists()) {
-            commands.add("-Xbootclasspath/a:" + toolsJar.getAbsolutePath());
+            command.add("-Xbootclasspath/a:" + toolsJar.getAbsolutePath());
         }
 
         // "${JAVA_HOME}"/bin/java \
@@ -148,7 +150,7 @@ public class ProcessUtils {
 
             int exitValue = proc.exitValue();
             if (exitValue != 0) {
-                //AnsiLog.error("attach fail, targetPid: " + targetPid);
+                AnsiLog.error("attach fail, targetPid: " + targetPid);
                 System.exit(1);
             }
         } catch (Throwable e) {
