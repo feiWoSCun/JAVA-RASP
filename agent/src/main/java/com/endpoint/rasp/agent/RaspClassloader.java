@@ -9,8 +9,8 @@ import java.net.URLClassLoader;
  * @email: 2825097536@qq.com
  * @description:
  */
-public class ArthasClassloader extends URLClassLoader {
-    public ArthasClassloader(URL[] urls) {
+public class RaspClassloader extends URLClassLoader {
+    public RaspClassloader(URL[] urls) {
         super(urls, ClassLoader.getSystemClassLoader().getParent());
     }
 
