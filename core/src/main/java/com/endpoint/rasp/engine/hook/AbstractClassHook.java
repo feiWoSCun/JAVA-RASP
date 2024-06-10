@@ -206,7 +206,7 @@ public abstract class AbstractClassHook {
             return getConstructor(ctClass, desc);
         }
         LinkedList<CtBehavior> methods = new LinkedList<CtBehavior>();
-        if (StringUtils.isEmpty(desc)) {
+        if (desc!=null&&desc.isEmpty()) {
             CtMethod[] allMethods = ctClass.getDeclaredMethods();
             if (allMethods != null) {
                 for (CtMethod method : allMethods) {
@@ -308,7 +308,7 @@ public abstract class AbstractClassHook {
         if (isLoadedByBootstrapLoader) {
             src = "com.endpoint.rasp.ModuleLoader.moduleClassLoader.loadClass(\"" + invokeClassName + "\").getMethod(\"" + methodName +
                     "\"," + parameterTypesString + ").invoke(null";
-            if (!StringUtils.isEmpty(paramString)) {
+            if (paramString!=null&&paramString.isEmpty()) {
                 src += (",new Object[]{" + paramString + "});");
             } else {
                 src += ",null);";

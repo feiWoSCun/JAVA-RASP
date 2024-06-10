@@ -1,6 +1,6 @@
 package com.endpoint.rasp.engine.upgrade;
 
-import com.endpoint.rasp.engine.bootstrap.RaspBootstrap;
+import com.endpoint.rasp.engine.RaspBootstrap;
 
 /**
  * 测试引擎升级

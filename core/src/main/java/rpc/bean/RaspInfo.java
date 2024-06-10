@@ -12,7 +12,7 @@ public class RaspInfo {
     /**
      * 注入进程ID
      */
-    private String pid;
+    private String pid="test";
     /**
      * 注入容器类型:tomcat，jetty，weblogic，resin，spring（springboot\springmvc）
      */

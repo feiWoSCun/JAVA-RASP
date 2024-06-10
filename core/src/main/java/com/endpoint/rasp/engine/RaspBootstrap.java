@@ -1,4 +1,4 @@
-package com.endpoint.rasp.engine.bootstrap;
+package com.endpoint.rasp.engine;
 
 import com.endpoint.rasp.common.AnsiLog;
 import com.endpoint.rasp.engine.transformer.CustomClassTransformer;
@@ -26,6 +26,8 @@ public class RaspBootstrap {
     public static String raspPid;
 
     public static RaspBootstrap INSTANCE;
+    public static String raspServerType = null;
+    public static int VERSION=1;
 
     public static synchronized RaspBootstrap getInstance(Instrumentation inst, String args) throws Exception {
         if (INSTANCE == null) {

@@ -1,7 +1,7 @@
 package rpc.service;
 
 
-import com.endpoint.rasp.engine.EngineBoot;
+import com.endpoint.rasp.engine.RaspBootstrap;
 import com.endpoint.rasp.engine.checker.CheckParameter;
 import com.endpoint.rasp.engine.checker.CheckerManager;
 import com.endpoint.rasp.engine.common.constant.MemoryShellConstant;
@@ -36,7 +36,7 @@ public class BaseService {
     private String ip = "127.0.0.1";
     private String port = "10573";
     private static RaspConfig raspConfig = new RaspConfig();
-    private EngineBoot engineBoot;
+    private RaspBootstrap raspBootStrap;
     private int warning_times = 0;
     public static void main(String[] args) {
 //        baseService.init(null,System.getProperty("user.dir")+ File.separator+"lib"+File.separator);
@@ -53,7 +53,7 @@ public class BaseService {
     /**
      * init
      */
-    public void init(EngineBoot boot,String libpath) {
+    public void init(RaspBootstrap boot, String libpath) {
         boolean is_jvm_64 = "64".equals(System.getProperty("sun.arch.data.model"))?true:false;
         System.out.println(libpath);
         if (IS_WIN32()) {
@@ -78,8 +78,8 @@ public class BaseService {
                 System.load(libpath+"linux/x32/librpc_jni.so");
             }
         }
-        engineBoot = boot;
-        RaspInfo raspInfo = new RaspInfo(EngineBoot.raspPid,EngineBoot.raspServerType,EngineBoot.VERSION);
+        raspBootStrap = boot;
+        RaspInfo raspInfo = new RaspInfo(RaspBootstrap.raspPid, RaspBootstrap.raspServerType, RaspBootstrap.VERSION);
         raspConfig.setRaspInfo(raspInfo);
         login();//初始化执行登陆
         //TODO 待修改为线程池
@@ -166,11 +166,11 @@ public class BaseService {
                         if(config.getRaspStatus()!=null&&!config.getRaspStatus().equals(raspConfig.getRaspStatus())){
                             raspConfig.setRaspStatus(config.getRaspStatus());
                             if(RaspEngineConstant.RASP_ENGINE_STATUS_OPEN.equals(raspConfig.getRaspStatus())){
-                                engineBoot.start();
+                                raspBootStrap.start();
                                 raspConfig.getRaspInfo().setStatus(RaspEngineConstant.RASP_ENGINE_STATUS_OPEN);
                                 LogTool.info("RASP 引擎状态修改为启动");
                             }else if(RaspEngineConstant.RASP_ENGINE_STATUS_CLOSE.equals(raspConfig.getRaspStatus())){
-                                engineBoot.stop();
+                                raspBootStrap.stop();
                                 raspConfig.getRaspInfo().setStatus(RaspEngineConstant.RASP_ENGINE_STATUS_CLOSE);
                                 LogTool.info("RASP 引擎状态修改为关闭");
                             }else {
