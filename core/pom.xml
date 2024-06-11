@@ -36,7 +36,7 @@
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
-            <version>2.8.5</version>
+            <version>2.8.9</version>
         </dependency>
     </dependencies>
     <build>
@@ -56,7 +56,8 @@
                             <shadedArtifactAttached>false</shadedArtifactAttached>
                             <finalName>rasp-core-shade</finalName>
                             <transformers>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <mainClass>com.endpoint.rasp.engine.Core</mainClass>
                                     <manifestEntries>
                                         <Created-By>core engine team, middleware group, alibaba inc.</Created-By>
@@ -67,6 +68,20 @@
                                     </manifestEntries>
                                 </transformer>
                             </transformers>
+                            <relocations>
+                                <relocation>
+                                    <pattern>org.apache.log4j</pattern>
+                                    <shadedPattern>com.endpoint.rasp.log4j</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>com.google</pattern>
+                                    <shadedPattern>com.endpoint.rasp</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>javassist</pattern>
+                                    <shadedPattern>com.endpoint.rasp.javassist</shadedPattern>
+                                </relocation>
+                            </relocations>
                         </configuration>
                     </execution>
                 </executions>
