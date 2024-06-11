@@ -1,23 +1,19 @@
 package com.endpoint.rasp.engine;
 
 import com.endpoint.rasp.common.AnsiLog;
-import com.endpoint.rasp.engine.common.log.ErrorType;
-import com.endpoint.rasp.engine.common.log.LogTool;
 import com.endpoint.rasp.engine.transformer.CustomClassTransformer;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.lang.instrument.Instrumentation;
-import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
 /**
- * E-Rasp引擎入口类
- * <p>
- * Created by yunchao.zheng on 2023-03-14
+ * @author: feiwoscun
+ * @date: 2024/6/9
+ * @email: 2825097536@qq.com
+ * @description:
  */
 public class RaspBootstrap {
     public static final Logger LOGGER = Logger.getLogger(RaspBootstrap.class.getName());

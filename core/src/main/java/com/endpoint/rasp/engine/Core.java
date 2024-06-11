@@ -1,13 +1,5 @@
 package com.endpoint.rasp.engine;
 
-/**
- * @author: feiwoscun
- * @date: 2024/6/7
- * @email: 2825097536@qq.com
- * @description:
- */
-
-
 import com.endpoint.rasp.common.AnsiLog;
 import com.endpoint.rasp.common.JavaVersionUtils;
 import com.sun.tools.attach.VirtualMachine;

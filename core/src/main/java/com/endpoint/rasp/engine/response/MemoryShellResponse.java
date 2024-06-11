@@ -4,7 +4,6 @@ import com.endpoint.rasp.engine.checker.CheckParameter;
 import com.endpoint.rasp.engine.checker.info.EventInfo;
 import com.endpoint.rasp.engine.checker.info.MemoryShellInfo;
 import com.endpoint.rasp.engine.common.log.ErrorType;
-import com.endpoint.rasp.engine.common.log.ExceptionModel;
 import com.endpoint.rasp.engine.common.log.LogTool;
 import rpc.bean.RPCMemShellEventLog;
 import rpc.job.SendRaspEventLogJob;
