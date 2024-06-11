@@ -8,6 +8,7 @@ import java.lang.instrument.Instrumentation;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.security.CodeSource;
+import java.util.jar.JarFile;
 
 /**
  * @author: feiwoscun
@@ -22,6 +23,7 @@ public class AgentBootstrap {
     private static final String IS_BIND = "isBind";
 
     private static PrintStream ps = System.err;
+
     static {
         try {
             File raspLogDir = new File(System.getProperty("user.home") + File.separator + "logs" + File.separator
@@ -100,7 +102,7 @@ public class AgentBootstrap {
             int index = args.indexOf(';');
             if (index != -1) {
                 raspCoreJar = args.substring(0, index);
-                agentArgs = args.substring(index);
+                agentArgs = args.substring(index + 1);
             } else {
                 raspCoreJar = "";
                 agentArgs = args;
@@ -145,17 +147,15 @@ public class AgentBootstrap {
              * Use a dedicated thread to run the binding logic to prevent possible memory leak. #195
              */
             final ClassLoader agentLoader = getClassLoader(inst, raspCoreJarFile);
-
-            Thread bindingThread = new Thread() {
-                @Override
-                public void run() {
-                    try {
-                        bind(inst, agentLoader, agentArgs);
-                    } catch (Throwable throwable) {
-                        throwable.printStackTrace(ps);
-                    }
+            inst.appendToBootstrapClassLoaderSearch(new JarFile(raspCoreJar));
+            inst.appendToBootstrapClassLoaderSearch(new JarFile(agentArgs));
+            Thread bindingThread = new Thread(() -> {
+                try {
+                    bind(inst, agentLoader, agentArgs);
+                } catch (Throwable throwable) {
+                    throwable.printStackTrace(ps);
                 }
-            };
+            });
 
             bindingThread.setName("rasp-binding-thread");
             bindingThread.start();
@@ -179,6 +179,7 @@ public class AgentBootstrap {
          * raspBootstrap bootstrap = raspBootstrap.getInstance(inst);
          * </pre>
          */
+
         Class<?> bootstrapClass = agentLoader.loadClass(RASP_BOOTSTRAP);
         Object bootstrap = bootstrapClass.getMethod(GET_INSTANCE, Instrumentation.class, String.class).invoke(null, inst, args);
        /* boolean isBind = (Boolean) bootstrapClass.getMethod(IS_BIND).invoke(bootstrap);

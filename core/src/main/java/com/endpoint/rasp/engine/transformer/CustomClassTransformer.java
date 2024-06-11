@@ -1,11 +1,13 @@
 package com.endpoint.rasp.engine.transformer;
 
+import com.endpoint.rasp.engine.RaspBootstrap;
 import com.endpoint.rasp.engine.common.annotation.AnnotationScanner;
 import com.endpoint.rasp.engine.common.annotation.HookAnnotation;
 import com.endpoint.rasp.engine.common.log.ErrorType;
 import com.endpoint.rasp.engine.common.log.LogTool;
 import com.endpoint.rasp.engine.hook.AbstractClassHook;
 import com.sun.org.apache.xerces.internal.impl.dv.util.Base64;
+import javassist.ClassClassPath;
 import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.LoaderClassPath;
@@ -201,10 +203,10 @@ public class CustomClassTransformer implements ClassFileTransformer {
                     ClassPool classPool = new ClassPool();
                     addLoader(classPool, loader);
                     ctClass = classPool.makeClass(new ByteArrayInputStream(classfileBuffer));
-                    if (loader == null) {
+                /*    if (loader == null) {
                         //没有指定构造器，则使用boot构造器
                         hook.setLoadedByBootstrapLoader(true);
-                    }
+                    }*/
                     classfileBuffer = hook.transformClass(ctClass);
                     //TODO 需关闭
                     if ("io/undertow/servlet/handlers/ServletHandler".equals(className)) {
@@ -241,6 +243,7 @@ public class CustomClassTransformer implements ClassFileTransformer {
 
     private void addLoader(ClassPool classPool, ClassLoader loader) {
         classPool.appendSystemPath();
+        classPool.appendClassPath(new ClassClassPath(RaspBootstrap.class));
         if (loader != null) {
             classPool.appendClassPath(new LoaderClassPath(loader));
         }

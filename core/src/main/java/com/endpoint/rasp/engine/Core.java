@@ -94,12 +94,7 @@ public class Core {
             //CONFIG.setAgentPath();
             //CONFIG.setCorePath();
             try {
-                String agentPath1 = CONFIG.getAgentPath();
-                System.out.println("feiwoscun:"+ agentPath1);
-
-                String agentPath = agentPath1;
-                String corePath = CONFIG.getCorePath();
-                virtualMachine.loadAgent(agentPath,corePath +";" + agentPath1);
+                virtualMachine.loadAgent(CONFIG.getAgentPath(),CONFIG.getCorePath() +";" + CONFIG.getAgentPath());
             } catch (IOException e) {
                 if (e.getMessage() != null && e.getMessage().contains("Non-numeric value found")) {
                     AnsiLog.warn(e);

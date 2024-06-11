@@ -1,12 +1,17 @@
 package com.endpoint.rasp.engine;
 
 import com.endpoint.rasp.common.AnsiLog;
+import com.endpoint.rasp.engine.common.log.ErrorType;
+import com.endpoint.rasp.engine.common.log.LogTool;
 import com.endpoint.rasp.engine.transformer.CustomClassTransformer;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.lang.instrument.Instrumentation;
+import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -37,17 +42,20 @@ public class RaspBootstrap {
         return INSTANCE;
     }
 
+
+
     /**
      * @param inst
      * @param agentArgs 目前只有“-agent /path”
      * @throws Exception
      */
     public RaspBootstrap(Instrumentation inst, String agentArgs) throws Exception {
-        AnsiLog.info(AnsiLog.red("load agent success,now in RaspBootstrap,it`s classloader is :" + RaspBootstrap.class.getClassLoader()));
+        AnsiLog.info(AnsiLog.red("load agent success,RaspBootstrap: it`s classloader is :" + RaspBootstrap.class.getClassLoader()));
         String baseDir = new File(agentArgs).getParent();
         this.instrumentation = inst;
+        AnsiLog.info(baseDir);
         //此时Log4j Appender的ClassLoader是Boot，如果agent中已经使用过，那Appender的ClassLoader会是App，会存在Appender无法找到，导致log4j初始化失败
-        System.setProperty("log-path", baseDir + File.separator + "logs" + ".log");
+        System.setProperty("log-path", baseDir + File.separator + "logs" + File.separator+"rasp.log");
         PropertyConfigurator.configure(RaspBootstrap.class.getResourceAsStream("/log4j.properties"));
         logger.info("[E-RASP] Engine Starting，PID{" + raspPid + "} ");
 //        logger.debug("ProcessBuilderHook class loader:"+ ProcessBuilderHook.class.getClassLoader());

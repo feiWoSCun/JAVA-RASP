@@ -25,6 +25,7 @@ public abstract class AbstractChecker implements Checker {
     @Override
     public EventInfo check(CheckParameter checkParameter) {
         EventInfo info = checkParam(checkParameter);
+        System.out.println(info.getMessage());
         boolean isBlock = false;
         //多条告警合并
         if (info!=null) {
