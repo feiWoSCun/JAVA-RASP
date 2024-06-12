@@ -6,6 +6,8 @@ import com.sun.tools.attach.VirtualMachine;
 import com.sun.tools.attach.VirtualMachineDescriptor;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -52,7 +54,13 @@ public class Core {
             System.exit(-1);
         }
     }
-
+    private  String encodeArg(String arg) {
+        try {
+            return URLEncoder.encode(arg, "utf-8");
+        } catch (UnsupportedEncodingException e) {
+            return arg;
+        }
+    }
     private void attachAgent() throws Exception {
         VirtualMachineDescriptor virtualMachineDescriptor = null;
         final String tarPid = CONFIG.get("-pid");
@@ -86,7 +94,9 @@ public class Core {
             //CONFIG.setAgentPath();
             //CONFIG.setCorePath();
             try {
-                virtualMachine.loadAgent(CONFIG.getAgentPath(),CONFIG.getCorePath() +";" + CONFIG.getAgentPath());
+                String options = CONFIG.getCorePath() + ";" + CONFIG.getAgentPath();
+                options = encodeArg(options);
+                virtualMachine.loadAgent(CONFIG.getAgentPath(), options);
             } catch (IOException e) {
                 if (e.getMessage() != null && e.getMessage().contains("Non-numeric value found")) {
                     AnsiLog.warn(e);

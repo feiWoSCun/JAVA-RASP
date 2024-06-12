@@ -1,7 +1,5 @@
 package com.endpoint.rasp.boot;
-
 import com.endpoint.rasp.common.AnsiLog;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -106,19 +104,8 @@ public class ProcessUtils {
         if (toolsJar != null && toolsJar.exists()) {
             command.add("-Xbootclasspath/a:" + toolsJar.getAbsolutePath());
         }
-
-        // "${JAVA_HOME}"/bin/java \
-        // ${opts} \
-        // -jar "${arthas_lib_dir}/arthas-core.jar" \
-        // -pid ${TARGET_PID} \
-        // -target-ip ${TARGET_IP} \
-        // -telnet-port ${TELNET_PORT} \
-        // -http-port ${HTTP_PORT} \
-        // -core "${arthas_lib_dir}/arthas-core.jar" \
-        // -agent "${arthas_lib_dir}/arthas-agent.jar"
         command.addAll(commands);
         ProcessBuilder pb = new ProcessBuilder(command);
-        // https://github.com/alibaba/arthas/issues/2166
         command.add("-pid");
         command.add(targetPid);
         pb.environment().put("JAVA_TOOL_OPTIONS", "");

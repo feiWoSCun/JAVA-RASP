@@ -146,11 +146,13 @@ public class AgentBootstrap {
             /**
              * Use a dedicated thread to run the binding logic to prevent possible memory leak. #195
              */
+
             final ClassLoader agentLoader = getClassLoader(inst, raspCoreJarFile);
             inst.appendToBootstrapClassLoaderSearch(new JarFile(raspCoreJar));
             inst.appendToBootstrapClassLoaderSearch(new JarFile(agentArgs));
             Thread bindingThread = new Thread(() -> {
                 try {
+
                     bind(inst, agentLoader, agentArgs);
                 } catch (Throwable throwable) {
                     throwable.printStackTrace(ps);
@@ -173,13 +175,21 @@ public class AgentBootstrap {
         }
     }
 
+    private static void initLogPath(File agentPath) {
+        String logHome = agentPath.getParent();
+        System.setProperty("log-path", logHome + File.separator + "logs" + File.separator + "rasp.log");
+
+    }
+
     private static void bind(Instrumentation inst, ClassLoader agentLoader, String args) throws Throwable {
         /**
          * <pre>
          * raspBootstrap bootstrap = raspBootstrap.getInstance(inst);
          * </pre>
          */
-
+        File f = new File(args);
+        initLogPath(f);
+        Thread.currentThread().setContextClassLoader(agentLoader);
         Class<?> bootstrapClass = agentLoader.loadClass(RASP_BOOTSTRAP);
         Object bootstrap = bootstrapClass.getMethod(GET_INSTANCE, Instrumentation.class, String.class).invoke(null, inst, args);
        /* boolean isBind = (Boolean) bootstrapClass.getMethod(IS_BIND).invoke(bootstrap);

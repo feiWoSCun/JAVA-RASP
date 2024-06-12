@@ -1,11 +1,14 @@
 package com.endpoint.rasp.boot;
 
 
+import com.endpoint.rasp.common.AnsiLog;
+
 import java.io.File;
 import java.net.URISyntaxException;
 import java.security.CodeSource;
 import java.util.ArrayList;
 import java.util.List;
+
 /**
  * @author: feiwoscun
  * @date: 2024/6/9
@@ -22,7 +25,6 @@ public class Bootstrap {
 
     static {
         CodeSource codeSource = Bootstrap.class.getProtectionDomain().getCodeSource();
-
         File bootJarPath;
         try {
             bootJarPath = new File(codeSource.getLocation().toURI().getSchemeSpecificPart());
@@ -33,6 +35,7 @@ public class Bootstrap {
     }
 
     public static void main(String[] args) {
+
         //debug用
         try {
             Thread.sleep(1000);
@@ -43,12 +46,21 @@ public class Bootstrap {
     }
 
     private void startBoot(String[] args) {
+        this.checkArgs(args);
         final List<String> command = new ArrayList<>();
         //组装java -jar path/core.jar
         final String corePath = new File(RASP_HOME_DIR, CORE_NAME).getAbsolutePath();
         System.out.println(corePath);
         setCommand(command, corePath);
         ProcessUtils.startArthasCore(args[0], command);
+    }
+
+    private void checkArgs(String[] args) {
+        if (args == null || args.length == 0 || args[0] == null || args[0].isEmpty() || !args[0].matches("-?\\d+")) {
+            AnsiLog.error("Please specify the arguments to bootstrap,we need a pid about target java process");
+            AnsiLog.error("for example: java -jar boot.jar 12345,12345 is the target java process");
+            System.exit(0);
+        }
     }
 
     private void setCommand(List<String> command, String corePath) {

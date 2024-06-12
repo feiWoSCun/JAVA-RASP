@@ -2,10 +2,8 @@ package com.endpoint.rasp.engine;
 
 import com.endpoint.rasp.common.AnsiLog;
 import com.endpoint.rasp.engine.transformer.CustomClassTransformer;
-import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 
-import java.io.File;
 import java.lang.instrument.Instrumentation;
 import java.util.concurrent.TimeUnit;
 
@@ -16,11 +14,8 @@ import java.util.concurrent.TimeUnit;
  * @description:
  */
 public class RaspBootstrap {
-    public static final Logger LOGGER = Logger.getLogger(RaspBootstrap.class.getName());
-
     private CustomClassTransformer transformer;
     private final Instrumentation instrumentation;
-    private final Logger logger = Logger.getLogger(RaspBootstrap.class.getName());
     /**
      * 注入进程PID
      */
@@ -30,9 +25,16 @@ public class RaspBootstrap {
     public static String raspServerType = null;
     public static int VERSION=1;
 
+    /**
+     *
+     * @param inst tools.jar工具
+     * @param args 留着后续可能会有拓展
+     * @return 单例
+     * @throws Exception
+     */
     public static synchronized RaspBootstrap getInstance(Instrumentation inst, String args) throws Exception {
         if (INSTANCE == null) {
-            INSTANCE = new RaspBootstrap(inst, args);
+            INSTANCE = new RaspBootstrap(inst);
         }
         AnsiLog.info(AnsiLog.red("RaspBootstrap instance created，the classloader is：" + INSTANCE.getClass().getClassLoader()));
         return INSTANCE;
@@ -42,19 +44,12 @@ public class RaspBootstrap {
 
     /**
      * @param inst
-     * @param agentArgs 目前只有“-agent /path”
      * @throws Exception
      */
-    public RaspBootstrap(Instrumentation inst, String agentArgs) throws Exception {
+    public RaspBootstrap(Instrumentation inst) throws Exception {
         AnsiLog.info(AnsiLog.red("load agent success,RaspBootstrap: it`s classloader is :" + RaspBootstrap.class.getClassLoader()));
-        String baseDir = new File(agentArgs).getParent();
         this.instrumentation = inst;
-        AnsiLog.info(baseDir);
-        //此时Log4j Appender的ClassLoader是Boot，如果agent中已经使用过，那Appender的ClassLoader会是App，会存在Appender无法找到，导致log4j初始化失败
-        System.setProperty("log-path", baseDir + File.separator + "logs" + File.separator+"rasp.log");
-        PropertyConfigurator.configure(RaspBootstrap.class.getResourceAsStream("/log4j.properties"));
-        logger.info("[E-RASP] Engine Starting，PID{" + raspPid + "} ");
-//        logger.debug("ProcessBuilderHook class loader:"+ ProcessBuilderHook.class.getClassLoader());
+        PropertyConfigurator.configure(this.getClass().getResourceAsStream("/log4j.properties"));
         if (!loadConfig()) {
             return;
         }
@@ -76,7 +71,7 @@ public class RaspBootstrap {
         //TODO 单机测试关闭Agent通信
         //BaseService.getInstance().init(this, baseDir + File.separator + "lib" + File.separator);
 
-        logger.info("[E-RASP] Engine Initialized ");
+        AnsiLog.info("[E-RASP] Engine Initialized ");
     }
 
     public void release(String mode) {
@@ -86,7 +81,7 @@ public class RaspBootstrap {
         }
         //清除所有检测引擎
 //        CheckerManager.release();
-        logger.info("[E-RASP] Engine Released ");
+
     }
 
 
@@ -105,7 +100,6 @@ public class RaspBootstrap {
      * 启动引擎
      */
     public void start() {
-        LOGGER.debug("start engine");
         initTransformer();
     }
 
@@ -113,7 +107,6 @@ public class RaspBootstrap {
      * 关闭引擎,恢复字节码
      */
     public void stop() {
-        LOGGER.debug("stop engine");
         release(null);
     }
 
