@@ -1,11 +1,12 @@
 package com.endpoint.rasp.engine;
 
 import com.endpoint.rasp.common.AnsiLog;
+import com.endpoint.rasp.engine.common.log.LogTool;
 import com.endpoint.rasp.engine.transformer.CustomClassTransformer;
 import org.apache.log4j.PropertyConfigurator;
 
 import java.lang.instrument.Instrumentation;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author: feiwoscun
@@ -20,43 +21,55 @@ public class RaspBootstrap {
      * 注入进程PID
      */
     public static String raspPid;
-
+    private final AtomicBoolean isBindRef = new AtomicBoolean(false);
     public static RaspBootstrap INSTANCE;
     public static String raspServerType = null;
-    public static int VERSION=1;
+    public static int VERSION = 1;
 
     /**
-     *
-     * @param inst tools.jar工具
-     * @param args 留着后续可能会有拓展
+     * @param inst   tools.jar工具
+     * @param action 安装或者卸载
      * @return 单例
      * @throws Exception
      */
-    public static synchronized RaspBootstrap getInstance(Instrumentation inst, String args) throws Exception {
+    public static synchronized RaspBootstrap getInstance(Instrumentation inst, String action) throws Exception {
+        //执行卸载
+        if ("uninstall".equals(action)) {
+            try {
+                INSTANCE.release();
+            } catch (Exception e) {
+                LogTool.info("RaspBootstrap release failed: " + e.getMessage());
+                throw new RuntimeException("RaspBootstrap release failed RaspBootstrap#getInstance: " + e.getMessage());
+            }
+        }
         if (INSTANCE == null) {
-            INSTANCE = new RaspBootstrap(inst);
+            INSTANCE = new RaspBootstrap(inst, action);
         }
         AnsiLog.info(AnsiLog.red("RaspBootstrap instance created，the classloader is：" + INSTANCE.getClass().getClassLoader()));
         return INSTANCE;
     }
 
 
-
     /**
      * @param inst
      * @throws Exception
      */
-    public RaspBootstrap(Instrumentation inst) throws Exception {
+    public RaspBootstrap(Instrumentation inst, String action) throws Exception {
         AnsiLog.info("load agent success,RaspBootstrap: it`s classloader :" + RaspBootstrap.class.getClassLoader());
         this.instrumentation = inst;
         PropertyConfigurator.configure(this.getClass().getResourceAsStream("/log4j.properties"));
         if (!loadConfig()) {
             return;
         }
-        //TODO 默认应该是关闭的。与Agent通信成功后再修改字节码
+        if (!isBindRef.compareAndSet(false, true)) {
+            AnsiLog.warn("rasp already bind,plz check if you are rebinding");
+            throw new IllegalStateException("rasp already bind,plz check if you are rebinding");
+        }
+        //与Agent通信成功后再修改字节码
         initTransformer();
-        //TODO 测试代码：验证字节码是否被重新生成
-        new Thread(new Runnable() {
+
+        //测试代码：验证字节码是否被重新生成
+/*        new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
@@ -66,7 +79,7 @@ public class RaspBootstrap {
                 }
                 transformer.testRetransformHook();
             }
-        }).start();
+        }).start();*/
         //RPC服务初始化，连接EDRAgent,并创建心跳
         //TODO 单机测试关闭Agent通信
         //BaseService.getInstance().init(this, baseDir + File.separator + "lib" + File.separator);
@@ -74,13 +87,13 @@ public class RaspBootstrap {
         AnsiLog.info("[E-RASP] Engine Initialized ");
     }
 
-    public void release(String mode) {
+    public void release() {
 //        CpuMonitorManager.release();//停止CPU资源监控
         if (transformer != null) {
             transformer.release();
         }
         //清除所有检测引擎
-//        CheckerManager.release();
+        //   CheckerManager.release();
 
     }
 
@@ -107,7 +120,7 @@ public class RaspBootstrap {
      * 关闭引擎,恢复字节码
      */
     public void stop() {
-        release(null);
+        release();
     }
 
     /**
@@ -134,5 +147,14 @@ public class RaspBootstrap {
 ////        deleteTmpDir();
 //        //Test--测试定时更新
 ////        TestUpgrade.upgradeCycle(this);
+    }
+
+    /**
+     * 判断服务端是否已经启动
+     *
+     * @return true:服务端已经启动;false:服务端关闭
+     */
+    public boolean isBind() {
+        return isBindRef.get();
     }
 }

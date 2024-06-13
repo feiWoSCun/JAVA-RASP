@@ -17,13 +17,15 @@ import java.util.List;
  * @description:
  */
 public class Bootstrap {
-    private static final File RASP_HOME_DIR;
-    private static final String JAR = "-jar";
-    private static final String CORE = "-core";
-    public static final String AGENT = "-agent";
+    private static File RASP_HOME_DIR;
+    private static final String ARG1 = "-jar";
+    private static final String ARG2 = "-home";
+    public static final String ARG4 = "-action";
+    public static final String ARG5 = "-pid";
     private static final String CORE_NAME = "rasp-core-shade.jar";
     private static final String AGENT_JAR = "agent.jar";
     private static String pid = "-1";
+    private String install;
 
     static {
         CodeSource codeSource = Bootstrap.class.getProtectionDomain().getCodeSource();
@@ -44,20 +46,22 @@ public class Bootstrap {
         this.parseArgs(args);
         final List<String> command = new ArrayList<>();
         //组装java -jar path/core.jar
-        final String corePath = new File(RASP_HOME_DIR, CORE_NAME).getAbsolutePath();
-        System.out.println(corePath);
-        setCommand(command, corePath);
-        ProcessUtils.startRaspCore(pid, command);
+
+        setCommand(command, install);
+        ProcessUtils.startRaspCore(command);
     }
 
     /**
      * 解析java -jar的参数  直接用魔术值
+     *
      * @param args
      */
     private void parseArgs(String[] args) {
         try {
             Options options = new Options();
             options.addOption("pid", true, "Specify the pid of Java server to attach");
+            options.addOption("install", true, "execute install，specify the path of e-rasp");
+            options.addOption("uninstall", true, "execute uninstall，specify the path of e-rasp");
             //解析命令调用
             CommandLineParser parser = new DefaultParser();
             CommandLine cmd = parser.parse(options, args);
@@ -65,10 +69,20 @@ public class Bootstrap {
             if (cmd.hasOption("help")) {
                 helpFormatter.printHelp("java -jar boot.jar", options, true);
             }
+            //获取安装或卸载RASP引擎（jar）的路径
+            if (cmd.hasOption("install")) {
+                RASP_HOME_DIR = new File(cmd.getOptionValue("install"));
+                install = "install";
+            } else if (cmd.hasOption("uninstall")) {
+                RASP_HOME_DIR = new File(cmd.getOptionValue("uninstall"));
+                install = "uninstall";
+            } else {
+                AnsiLog.error("One of -install and -uninstall must be specified");
+            }
             //获取进程ID
-            if ( cmd.hasOption("pid") && this.checkPid(pid)){
+            if (cmd.hasOption("pid") && this.checkPid(pid)) {
                 pid = cmd.getOptionValue("pid");
-            } else{
+            } else {
                 returnWrongMsg();
             }
         } catch (ParseException e) {
@@ -82,18 +96,25 @@ public class Bootstrap {
     }
 
     private static void returnWrongMsg() {
-        AnsiLog.error("Please specify the arguments to bootstrap,we need a pid about target java process");
-        AnsiLog.error("for example: java -jar boot.jar 12345,12345 is the target java process");
+        AnsiLog.error("Please specify the arguments to bootstrap,we need a pid about target java process\n,for example: java -jar boot.jar -pid 12345,12345 is the target java process");
         System.exit(1);
     }
 
-    private void setCommand(List<String> command, String corePath) {
-        command.add(JAR);
+    /**
+     * pid一定放在最后
+     * @param command
+     * @param install
+     */
+    private void setCommand(List<String> command, String install) {
+        final String corePath = new File(RASP_HOME_DIR, CORE_NAME).getAbsolutePath();
+        command.add(ARG1);
         command.add(corePath);
-        command.add(CORE);
-        command.add(corePath);
-        command.add(AGENT);
-        command.add(new File(RASP_HOME_DIR, AGENT_JAR).getAbsolutePath());
+        command.add(ARG2);
+        command.add(RASP_HOME_DIR.getAbsolutePath());
+        command.add(ARG4);
+        command.add("install".equals(install)?install:"uninstall");
+        command.add(ARG5);
+        command.add(pid);
     }
 
 

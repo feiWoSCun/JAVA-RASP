@@ -1,10 +1,10 @@
 package com.endpoint.rasp.engine;
 
 import com.endpoint.rasp.common.AnsiLog;
+import com.endpoint.rasp.common.ArgsEnums;
 import com.endpoint.rasp.common.JavaVersionUtils;
 import com.sun.tools.attach.VirtualMachine;
 import com.sun.tools.attach.VirtualMachineDescriptor;
-
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -22,13 +22,10 @@ public class Core {
     //"java -xbootpath: /home....  -pid 2200 "
     private Core(String[] args) throws Exception {
         this.getConfig(args);
-        CONFIG.printSelf();
+        AnsiLog.info(DEFAULT_CONFIG.toString());
         this.attachAgent();
     }
 
-    private void doAttach() {
-
-    }
 
     /**
      * a map to contain args;
@@ -37,12 +34,9 @@ public class Core {
     private final static Map<String, Boolean> DEFAULT_CONFIG;
 
     static {
-
         //k：参数 ，v：是否必须
         DEFAULT_CONFIG = new HashMap<>(4);
-        DEFAULT_CONFIG.put("-pid", true);
-        DEFAULT_CONFIG.put("-core", true);
-        DEFAULT_CONFIG.put("-agent", true);
+        DEFAULT_CONFIG.putAll(ArgsEnums.cache);
     }
 
     public static void main(String[] args) {
@@ -54,13 +48,15 @@ public class Core {
             System.exit(-1);
         }
     }
-    private  String encodeArg(String arg) {
+
+    private String encodeArg(String arg) {
         try {
             return URLEncoder.encode(arg, "utf-8");
         } catch (UnsupportedEncodingException e) {
             return arg;
         }
     }
+
     private void attachAgent() throws Exception {
         VirtualMachineDescriptor virtualMachineDescriptor = null;
         final String tarPid = CONFIG.getPid();
@@ -90,12 +86,11 @@ public class Core {
                             targetSystemProperties.getProperty("java.home"), System.getProperty("java.home"));
                 }
             }
-            System.out.println("feiwoscun:"+CONFIG.getAgentPath());
+
             //CONFIG.setAgentPath();
             //CONFIG.setCorePath();
             try {
-                String options = CONFIG.getCorePath() + ";" + CONFIG.getAgentPath()+";"+CONFIG.getPid();
-                options = encodeArg(options);
+                String options = CONFIG.toString();
                 virtualMachine.loadAgent(CONFIG.getAgentPath(), options);
             } catch (IOException e) {
                 if (e.getMessage() != null && e.getMessage().contains("Non-numeric value found")) {
@@ -108,7 +103,6 @@ public class Core {
                 }
             } catch (com.sun.tools.attach.AgentLoadException ex) {
                 if ("0".equals(ex.getMessage())) {
-                    // https://stackoverflow.com/a/54454418
                     AnsiLog.warn(ex);
                     AnsiLog.warn("It seems to use the higher version of JDK to attach the lower version of JDK.");
                     AnsiLog.warn(
@@ -134,10 +128,10 @@ public class Core {
                     CONFIG.put(arg, null);
                 } else {
                     CONFIG.put(arg, args[++index]);
-                    DEFAULT_CONFIG.remove(arg);
                 }
+                DEFAULT_CONFIG.remove(arg);
             } else {
-                System.out.println(AnsiLog.red("unresolved arg: " + arg));
+                AnsiLog.warn("unresolved arg: " + arg);
             }
             index++;
         }

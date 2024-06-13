@@ -1,7 +1,5 @@
 package com.endpoint.rasp.engine;
 
-import com.endpoint.rasp.common.AnsiLog;
-
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.HashMap;
@@ -15,23 +13,14 @@ import java.util.Set;
  */
 public class ArgsHashMap extends HashMap<String, String> {
 
-    public static final String AGENT = "-agent";
-    public static final String CORE = "-core";
     public static final String PID = "-pid";
     public static final String UTF_8 = "utf-8";
+    public static final String ACTION = "-action";
 
     public ArgsHashMap(int initialCapacity) {
         super(initialCapacity);
     }
 
-    //下面两个方法，应该是有用的，但是不用好像没什么毛病
-    public void setAgentPath() {
-        this.put(AGENT, encodeArg(this.get(AGENT)));
-    }
-
-    public void setCorePath() {
-        this.put(CORE, encodeArg(this.get(CORE)));
-    }
 
     private static String encodeArg(String arg) {
         try {
@@ -42,22 +31,27 @@ public class ArgsHashMap extends HashMap<String, String> {
     }
 
     public String getAgentPath() {
-        return this.get(AGENT);
+        return this.get("-home") + "/agent.jar";
     }
 
     public String getCorePath() {
-        return this.get(CORE);
+        return this.get("-home") + "/rasp-core-shade.jar";
     }
 
-    public void printSelf() {
-        AnsiLog.info("in core.jar,use these options:");
+    @Override
+    public String toString() {
         Set<Entry<String, String>> entries = this.entrySet();
-        for (Entry<String, String> entry : entries) {
-            AnsiLog.info(entry.getKey() + ": " + entry.getValue());
-        }
+       return encodeArg( this.getCorePath() + ";" +
+                this.getAgentPath() + ";" +
+                this.getPid() + ";" +
+                this.getAction());
     }
 
     public String getPid() {
         return this.get(PID);
+    }
+
+    public String getAction() {
+        return this.get(ACTION);
     }
 }

@@ -1,5 +1,7 @@
 package com.endpoint.rasp.boot;
+
 import com.endpoint.rasp.common.AnsiLog;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -79,7 +81,7 @@ public class ProcessUtils {
         return FOUND_JAVA_HOME;
     }
 
-    public static void startRaspCore(String targetPid, List<String> commands) {
+    public static void startRaspCore(List<String> commands) {
         // find java/java.exe, then try to find tools.jar
         String javaHome = findJavaHome();
 
@@ -106,8 +108,6 @@ public class ProcessUtils {
         }
         command.addAll(commands);
         ProcessBuilder pb = new ProcessBuilder(command);
-        command.add("-pid");
-        command.add(targetPid);
         pb.environment().put("JAVA_TOOL_OPTIONS", "");
         try {
             final Process proc = pb.start();
@@ -137,7 +137,7 @@ public class ProcessUtils {
 
             int exitValue = proc.exitValue();
             if (exitValue != 0) {
-                AnsiLog.error("attach fail, targetPid: " + targetPid);
+                AnsiLog.error("attach fail, targetPid: " + commands.get(commands.size() - 1));
                 System.exit(1);
             }
         } catch (Throwable e) {
