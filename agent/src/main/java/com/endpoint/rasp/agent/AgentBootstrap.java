@@ -8,6 +8,9 @@ import java.lang.instrument.Instrumentation;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.security.CodeSource;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 import java.util.jar.JarFile;
 
 /**
@@ -87,28 +90,38 @@ public class AgentBootstrap {
         return raspClassLoader;
     }
 
+    private static Map<String, String> parseArgs(String args) {
+
+        final Map<String, String> map = new HashMap<>(4);
+        final String[] split = args.split(";");
+        if (split.length >= 2) {
+            Optional.ofNullable(split[0]).ifPresent(t -> identifyArg(t, map, "raspCoreJar"));
+            Optional.ofNullable(split[1]).ifPresent(t -> identifyArg(t, map, "agentJar"));
+            Optional.ofNullable(split[2]).ifPresent(t -> identifyArg(t, map, "pid"));
+        } else {
+            System.out.println("shortage args when initing args,pid ,raspCoreJarPath,agentJar");
+            System.exit(1);
+        }
+        return map;
+    }
+
+    private static void identifyArg(String t, Map<String, String> map, String k) {
+        if (t.isEmpty()) {
+            System.out.println("parse null value!");
+            System.exit(1);
+        }
+        map.put(k, t);
+    }
+
     private static synchronized void main(String args, final Instrumentation inst) {
         try {
             System.out.println("Starting Rasp Agent");
             ps.println("rasp server agent start...");
-            // 传递的args参数分两个部分:raspCoreJar路径和agentArgs, 分别是Agent的JAR包路径和期望传递到服务端的参数
-            if (args == null) {
-                args = "";
-            }
+            args=args==null?"":args;
             args = decodeArg(args);
 
-            String raspCoreJar;
-            final String agentArgs;
-            int index = args.indexOf(';');
-            if (index != -1) {
-                raspCoreJar = args.substring(0, index);
-                agentArgs = args.substring(index + 1);
-            } else {
-                raspCoreJar = "";
-                agentArgs = args;
-            }
-
-            File raspCoreJarFile = new File(raspCoreJar);
+            Map<String, String> useArgs = parseArgs(args);
+            File raspCoreJarFile = new File(useArgs.get("raspCoreJar"));
             // 如果 rasp-core 的 jar 文件不存在
             if (!raspCoreJarFile.exists()) {
                 // 打印错误信息，提示找不到指定的 rasp-core jar 文件
@@ -148,12 +161,12 @@ public class AgentBootstrap {
              */
 
             final ClassLoader agentLoader = getClassLoader(inst, raspCoreJarFile);
-            inst.appendToBootstrapClassLoaderSearch(new JarFile(raspCoreJar));
-            inst.appendToBootstrapClassLoaderSearch(new JarFile(agentArgs));
+            inst.appendToBootstrapClassLoaderSearch(new JarFile(useArgs.get("raspCoreJar")));
+            inst.appendToBootstrapClassLoaderSearch(new JarFile(useArgs.get("agentJar")));
             Thread bindingThread = new Thread(() -> {
                 try {
 
-                    bind(inst, agentLoader, agentArgs);
+                    bind(inst, agentLoader, useArgs.get("agentJar"), useArgs.get("pid"));
                 } catch (Throwable throwable) {
                     throwable.printStackTrace(ps);
                 }
@@ -175,20 +188,21 @@ public class AgentBootstrap {
         }
     }
 
-    private static void initLogPath(File agentPath) {
+    private static void initLogPath(File agentPath, String pid) {
         String logHome = agentPath.getParent();
-        System.setProperty("log-path", logHome + File.separator + "logs" + File.separator + "rasp.log");
+        System.setProperty("log-path", logHome + File.separator + "logs" + File.separator + "rasp" + pid + ".log");
 
     }
 
-    private static void bind(Instrumentation inst, ClassLoader agentLoader, String args) throws Throwable {
+    private static void bind(Instrumentation inst, ClassLoader agentLoader, String args, String pid) throws Throwable {
         /**
          * <pre>
          * raspBootstrap bootstrap = raspBootstrap.getInstance(inst);
          * </pre>
          */
         File f = new File(args);
-        initLogPath(f);
+        initLogPath(f, pid);
+        //解决log4j  在不同线程初始化的问题
         Thread.currentThread().setContextClassLoader(agentLoader);
         Class<?> bootstrapClass = agentLoader.loadClass(RASP_BOOTSTRAP);
         Object bootstrap = bootstrapClass.getMethod(GET_INSTANCE, Instrumentation.class, String.class).invoke(null, inst, args);

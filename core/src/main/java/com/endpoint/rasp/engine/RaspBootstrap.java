@@ -47,7 +47,7 @@ public class RaspBootstrap {
      * @throws Exception
      */
     public RaspBootstrap(Instrumentation inst) throws Exception {
-        AnsiLog.info(AnsiLog.red("load agent success,RaspBootstrap: it`s classloader is :" + RaspBootstrap.class.getClassLoader()));
+        AnsiLog.info("load agent success,RaspBootstrap: it`s classloader :" + RaspBootstrap.class.getClassLoader());
         this.instrumentation = inst;
         PropertyConfigurator.configure(this.getClass().getResourceAsStream("/log4j.properties"));
         if (!loadConfig()) {

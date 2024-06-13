@@ -29,7 +29,7 @@ import java.util.concurrent.Semaphore;
 /**
  * RPC相关基础服务
  */
-public class BaseService {
+public class  BaseService {
     private static BaseService baseService = new BaseService();
     private String channel_hash;
     //TODO 需调整为配置

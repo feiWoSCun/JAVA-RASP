@@ -63,7 +63,7 @@ public class Core {
     }
     private void attachAgent() throws Exception {
         VirtualMachineDescriptor virtualMachineDescriptor = null;
-        final String tarPid = CONFIG.get("-pid");
+        final String tarPid = CONFIG.getPid();
         for (VirtualMachineDescriptor descriptor : VirtualMachine.list()) {
             String pid = descriptor.id();
             if (pid.equals(tarPid)) {
@@ -94,7 +94,7 @@ public class Core {
             //CONFIG.setAgentPath();
             //CONFIG.setCorePath();
             try {
-                String options = CONFIG.getCorePath() + ";" + CONFIG.getAgentPath();
+                String options = CONFIG.getCorePath() + ";" + CONFIG.getAgentPath()+";"+CONFIG.getPid();
                 options = encodeArg(options);
                 virtualMachine.loadAgent(CONFIG.getAgentPath(), options);
             } catch (IOException e) {

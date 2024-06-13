@@ -79,7 +79,7 @@ public class ProcessUtils {
         return FOUND_JAVA_HOME;
     }
 
-    public static void startArthasCore(String targetPid, List<String> commands) {
+    public static void startRaspCore(String targetPid, List<String> commands) {
         // find java/java.exe, then try to find tools.jar
         String javaHome = findJavaHome();
 
