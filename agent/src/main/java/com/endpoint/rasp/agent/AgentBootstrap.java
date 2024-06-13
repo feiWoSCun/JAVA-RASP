@@ -5,6 +5,7 @@ import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.instrument.Instrumentation;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.security.CodeSource;
@@ -17,7 +18,7 @@ import java.util.jar.JarFile;
  * @author: feiwoscun
  * @date: 2024/6/9
  * @email: 2825097536@qq.com
- * @description:
+ * @description: 为什么不使用maven的dependency呢=》想做一个纯净的agent启动类
  */
 public class AgentBootstrap {
     private static final String RASP_CORE_JAR = "core.jar";
@@ -26,29 +27,29 @@ public class AgentBootstrap {
     private static final String IS_BIND = "isBind";
 
     private static PrintStream ps = System.err;
-
+    //agent日志文件 把ps重定向到rasp-agent.log
     static {
         try {
-            File raspLogDir = new File(System.getProperty("user.home") + File.separator + "logs" + File.separator
-                    + "rasp" + File.separator);
-            if (!raspLogDir.exists()) {
-                raspLogDir.mkdirs();
-            }
-            if (!raspLogDir.exists()) {
-                // #572
-                raspLogDir = new File(System.getProperty("java.io.tmpdir") + File.separator + "logs" + File.separator
-                        + "rasp" + File.separator);
+            CodeSource codeSource = AgentBootstrap.class.getProtectionDomain().getCodeSource();
+            File agentJarPath;
+            try {
+                agentJarPath = new File(codeSource.getLocation().toURI().getSchemeSpecificPart());
+                File raspLogDir = agentJarPath.getParentFile();
                 if (!raspLogDir.exists()) {
-                    raspLogDir.mkdirs();
+                    raspLogDir = new File(System.getProperty("java.io.tmpdir") + File.separator + "logs" + File.separator
+                            + "rasp-agent" + File.separator);
+                    if (!raspLogDir.exists()) {
+                        raspLogDir.mkdirs();
+                    }
                 }
+                File log = new File(raspLogDir, "rasp.log");
+                if (!log.exists()) {
+                    log.createNewFile();
+                }
+                ps = new PrintStream(new FileOutputStream(log, true));
+            } catch (URISyntaxException e) {
+                throw new RuntimeException(e);
             }
-
-            File log = new File(raspLogDir, "rasp.log");
-
-            if (!log.exists()) {
-                log.createNewFile();
-            }
-            ps = new PrintStream(new FileOutputStream(log, true));
         } catch (Throwable t) {
             t.printStackTrace(ps);
         }
@@ -71,53 +72,11 @@ public class AgentBootstrap {
         main(args, inst);
     }
 
-    /**
-     * 让下次再次启动时有机会重新加载
-     */
-    public static void resetraspClassLoader() {
-        raspClassLoader = null;
-    }
-
-    private static ClassLoader getClassLoader(Instrumentation inst, File raspCoreJarFile) throws Throwable {
-        // 构造自定义的类加载器，尽量减少rasp对现有工程的侵蚀
-        return loadOrDefineClassLoader(raspCoreJarFile);
-    }
-
-    private static ClassLoader loadOrDefineClassLoader(File raspCoreJarFile) throws Throwable {
-        if (raspClassLoader == null) {
-            raspClassLoader = new RaspClassloader(new URL[]{raspCoreJarFile.toURI().toURL()});
-        }
-        return raspClassLoader;
-    }
-
-    private static Map<String, String> parseArgs(String args) {
-
-        final Map<String, String> map = new HashMap<>(4);
-        final String[] split = args.split(";");
-        if (split.length >= 2) {
-            Optional.ofNullable(split[0]).ifPresent(t -> identifyArg(t, map, "raspCoreJar"));
-            Optional.ofNullable(split[1]).ifPresent(t -> identifyArg(t, map, "agentJar"));
-            Optional.ofNullable(split[2]).ifPresent(t -> identifyArg(t, map, "pid"));
-        } else {
-            System.out.println("shortage args when initing args,pid ,raspCoreJarPath,agentJar");
-            System.exit(1);
-        }
-        return map;
-    }
-
-    private static void identifyArg(String t, Map<String, String> map, String k) {
-        if (t.isEmpty()) {
-            System.out.println("parse null value!");
-            System.exit(1);
-        }
-        map.put(k, t);
-    }
-
     private static synchronized void main(String args, final Instrumentation inst) {
         try {
             System.out.println("Starting Rasp Agent");
             ps.println("rasp server agent start...");
-            args=args==null?"":args;
+            args = args == null ? "" : args;
             args = decodeArg(args);
 
             Map<String, String> useArgs = parseArgs(args);
@@ -187,6 +146,51 @@ public class AgentBootstrap {
             throw new RuntimeException(t);
         }
     }
+
+    /**
+     * 让下次再次启动时有机会重新加载
+     */
+    public static void resetraspClassLoader() {
+        raspClassLoader = null;
+    }
+
+    private static ClassLoader getClassLoader(Instrumentation inst, File raspCoreJarFile) throws Throwable {
+        // 构造自定义的类加载器，尽量减少rasp对现有工程的侵蚀
+        return loadOrDefineClassLoader(raspCoreJarFile);
+    }
+
+    private static ClassLoader loadOrDefineClassLoader(File raspCoreJarFile) throws Throwable {
+        if (raspClassLoader == null) {
+            raspClassLoader = new RaspClassloader(new URL[]{raspCoreJarFile.toURI().toURL()});
+        }
+        return raspClassLoader;
+    }
+
+    private static Map<String, String> parseArgs(String args) {
+
+        final Map<String, String> map = new HashMap<>(4);
+        final String[] split = args.split(";");
+
+
+        if (split.length >= 2) {
+            Optional.ofNullable(split[0]).ifPresent(t -> identifyArg(t, map, "raspCoreJar"));
+            Optional.ofNullable(split[1]).ifPresent(t -> identifyArg(t, map, "agentJar"));
+            Optional.ofNullable(split[2]).ifPresent(t -> identifyArg(t, map, "pid"));
+        } else {
+            System.out.println("shortage args when initing args：pid ,raspCoreJarPath,agentJar");
+            System.exit(1);
+        }
+        return map;
+    }
+
+    private static void identifyArg(String t, Map<String, String> map, String k) {
+        if (t.isEmpty()) {
+            System.out.println("parse null value!");
+            System.exit(1);
+        }
+        map.put(k, t);
+    }
+
 
     private static void initLogPath(File agentPath, String pid) {
         String logHome = agentPath.getParent();
