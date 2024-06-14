@@ -89,6 +89,7 @@ public class RaspBootstrap {
 
     public void release() {
 //        CpuMonitorManager.release();//停止CPU资源监控
+        //BaseService.getInstance().close();
         if (transformer != null) {
             transformer.release();
         }
