@@ -39,6 +39,7 @@ public class ThreadPool {
         public void uncaughtException(Thread t, Throwable e) {
             LogTool.error(ErrorType.RUNTIME_ERROR, "Exception in thread " + t.getName(), e);
         }
+
         /**
          * 单例模式
          */
@@ -55,20 +56,21 @@ public class ThreadPool {
     }
 
 
-    public static <T> T submitAndGet(Callable<T> task) {
+    public static <T> T submitAndGet(Callable<T> task) throws TimeoutException, InterruptedException, ExecutionException {
         Future<T> future = threadPoolExecutor.submit(task);
-        T result = null;
         try {
             // 等待10秒
-            result = future.get(TIMEOUT, TimeUnit.SECONDS);
+            return future.get(TIMEOUT, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
             LogTool.error(ErrorType.HEARTBEAT_ERROR, "Task timed out");
+            throw e;
         } catch (InterruptedException e) {
             LogTool.error(ErrorType.RUNTIME_ERROR, "Task was interrupted");
+            throw e;
         } catch (ExecutionException e) {
             LogTool.error(ErrorType.RUNTIME_ERROR, "Task encountered an exception: " + e.getCause());
+            throw e;
         }
-        return result;
     }
 
     public static void exec(Runnable r) {
