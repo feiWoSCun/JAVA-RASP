@@ -4,6 +4,7 @@ import com.endpoint.rasp.common.AnsiLog;
 import com.endpoint.rasp.engine.common.log.LogTool;
 import com.endpoint.rasp.engine.transformer.CustomClassTransformer;
 import org.apache.log4j.PropertyConfigurator;
+import rpc.service.BaseService;
 
 import java.lang.instrument.Instrumentation;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -40,7 +41,6 @@ public class RaspBootstrap {
         if ("uninstall".equals(action)) {
             try {
                 INSTANCE.release();
-                INSTANCE = null;
             } catch (Exception e) {
                 LogTool.info("RaspBootstrap release failed: " + e.getMessage());
                 throw new RuntimeException("RaspBootstrap release failed RaspBootstrap#getInstance: " + e.getMessage());
@@ -90,10 +90,11 @@ public class RaspBootstrap {
 
     public void release() {
 //        CpuMonitorManager.release();//停止CPU资源监控
-        //BaseService.getInstance().close();
+        BaseService.getInstance().close();
         if (transformer != null) {
             transformer.release();
         }
+        INSTANCE=null;
         //清除所有检测引擎
         //   CheckerManager.release();
 

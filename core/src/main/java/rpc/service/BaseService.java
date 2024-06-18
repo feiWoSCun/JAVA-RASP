@@ -27,6 +27,22 @@ public abstract class BaseService {
     protected int warning_times = 0;
     protected static Map<String, BaseService> beans = new HashMap<>(2);
 
+    /**
+     * 适配原来的代码 默认使用rpc
+     * 懒加载
+     *
+     * @return
+     */
+    public static BaseService getInstance() {
+        try {
+            Class.forName("rpc.service.RpcService");
+            Class.forName("rpc.service.ZeroMQService");
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+        return getInstance("rpc");
+    }
+
     public BaseService(String port, String ip) {
         this.ip = ip;
         this.port = port;
@@ -39,20 +55,6 @@ public abstract class BaseService {
         //baseService.init(null,System.getProperty("user.dir")+ File.separator+"lib"+File.separator);
     }
 
-    /**
-     * 适配原来的代码 默认使用rpc
-     * 懒加载
-     * @return
-     */
-    public static BaseService getInstance() {
-        try {
-            Class.forName("rpc.service.RpcService");
-            Class.forName("rpc.service.ZeroMQService");
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-        return getInstance("rpc");
-    }
 
     private static BaseService getInstance(String name) {
         return beans.get(name);
@@ -158,6 +160,4 @@ public abstract class BaseService {
     public void close() {
 
     }
-
-    ;
 }
