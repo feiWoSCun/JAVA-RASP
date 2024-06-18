@@ -33,17 +33,18 @@ public class RaspBootstrap {
      * @throws Exception
      */
     public static synchronized RaspBootstrap getInstance(Instrumentation inst, String action) throws Exception {
+        if (INSTANCE == null) {
+            INSTANCE = new RaspBootstrap(inst, action);
+        }
         //执行卸载
         if ("uninstall".equals(action)) {
             try {
                 INSTANCE.release();
+                INSTANCE = null;
             } catch (Exception e) {
                 LogTool.info("RaspBootstrap release failed: " + e.getMessage());
                 throw new RuntimeException("RaspBootstrap release failed RaspBootstrap#getInstance: " + e.getMessage());
             }
-        }
-        if (INSTANCE == null) {
-            INSTANCE = new RaspBootstrap(inst, action);
         }
         AnsiLog.info(AnsiLog.red("RaspBootstrap instance created，the classloader is：" + INSTANCE.getClass().getClassLoader()));
         return INSTANCE;

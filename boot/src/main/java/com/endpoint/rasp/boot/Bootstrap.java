@@ -78,6 +78,7 @@ public class Bootstrap {
                 install = "uninstall";
             } else {
                 AnsiLog.error("One of -install and -uninstall must be specified");
+                returnWrongMsg();
             }
             //获取进程ID
             if (cmd.hasOption("pid") && this.checkPid(pid)) {
@@ -96,7 +97,8 @@ public class Bootstrap {
     }
 
     private static void returnWrongMsg() {
-        AnsiLog.error("Please specify the arguments to bootstrap,we need a pid about target java process\n,for example: java -jar boot.jar -pid 12345,12345 is the target java process");
+        AnsiLog.error("Please specify the arguments to bootstrap,we need a pid about target java process\n,for example: java -jar boot.jar -pid 12345, -install home/f/...\n" +
+                "12345 is the target java process;\n home/f/...is your boot.jar path");
         System.exit(1);
     }
 
