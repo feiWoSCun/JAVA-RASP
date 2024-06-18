@@ -5,7 +5,6 @@ import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.instrument.Instrumentation;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.security.CodeSource;
@@ -26,26 +25,29 @@ public class AgentBootstrap {
     private static final String GET_INSTANCE = "getInstance";
     private static final String IS_BIND = "isBind";
     private static PrintStream ps = System.err;
+    private static volatile ClassLoader raspClassLoader;
+    private static Map<String, String> useArgs;
 
-    //agent日志文件 把ps重定向到rasp-agent.log
+    //agent日志文件 把PrintStream重定向到rasp-agent.log
     static {
         try {
             CodeSource codeSource = AgentBootstrap.class.getProtectionDomain().getCodeSource();
             File agentJarPath;
-            try {
-                agentJarPath = new File(codeSource.getLocation().toURI().getSchemeSpecificPart());
-                String raspLogDir = agentJarPath.getParentFile().getAbsolutePath();
-                File logFile = new File(raspLogDir, "logs/rasp-agent.log");
-                File logDir = logFile.getParentFile();;
-                if (!logDir.exists()) {
-                    logDir.mkdirs();
+            agentJarPath = new File(codeSource.getLocation().toURI().getSchemeSpecificPart());
+            String raspLogDir = agentJarPath.getParentFile().getAbsolutePath();
+            File logFile = new File(raspLogDir, "logs/rasp-agent.log");
+            File logDir = logFile.getParentFile();
+            if (!logDir.exists()) {
+                if (!logDir.mkdirs()) {
+                    throw new RuntimeException("make log directory failed:");
                 }
-                logFile.createNewFile();
-                ps = new PrintStream(new FileOutputStream(logFile, true));
-            } catch (URISyntaxException e) {
-                throw new RuntimeException(e);
             }
+            if (!logFile.createNewFile()) {
+                throw new RuntimeException("create log file failed:");
+            }
+            ps = new PrintStream(new FileOutputStream(logFile, true));
         } catch (Throwable t) {
+            //创建日志文件，失败也不退出
             t.printStackTrace(ps);
         }
     }
@@ -57,7 +59,7 @@ public class AgentBootstrap {
      * 3. 如果ClassLoader一直没变，则 RaspBootstrap#getInstance 返回结果一直是一样的
      * </pre>
      */
-    private static volatile ClassLoader raspClassLoader;
+
 
     public static void premain(String args, Instrumentation inst) {
         main(args, inst);
@@ -74,7 +76,7 @@ public class AgentBootstrap {
             args = args == null ? "" : args;
             args = decodeArg(args);
 
-            final Map<String, String> useArgs = parseArgs(args);
+            useArgs = parseArgs(args);
             File raspCoreJarFile = new File(useArgs.get("raspCoreJar"));
             // 如果 rasp-core 的 jar 文件不存在
             if (!raspCoreJarFile.exists()) {
@@ -105,21 +107,17 @@ public class AgentBootstrap {
                 }
             }
 
-// 如果仍然找不到 rasp-core.jar 文件，则返回
+            // 如果仍然找不到 rasp-core.jar 文件，则返回
             if (!raspCoreJarFile.exists()) {
                 return;
             }
 
-            /**
-             * Use a dedicated thread to run the binding logic to prevent possible memory leak. #195
-             */
-
             final ClassLoader agentLoader = getClassLoader(inst, raspCoreJarFile);
+
             inst.appendToBootstrapClassLoaderSearch(new JarFile(useArgs.get("raspCoreJar")));
             inst.appendToBootstrapClassLoaderSearch(new JarFile(useArgs.get("agentJar")));
             Thread bindingThread = new Thread(() -> {
                 try {
-
                     bind(inst, agentLoader, useArgs);
                 } catch (Throwable throwable) {
                     throwable.printStackTrace(ps);
@@ -159,7 +157,7 @@ public class AgentBootstrap {
         final Map<String, String> map = new HashMap<>(4);
         final String[] split = args.split(";");
 
-//这里写死了
+        //这里写死了 后续要添加参数还要在这里加
         if (split.length >= 4) {
             Optional.ofNullable(split[0]).ifPresent(t -> identifyArg(t, map, "raspCoreJar"));
             Optional.ofNullable(split[1]).ifPresent(t -> identifyArg(t, map, "agentJar"));
@@ -196,16 +194,25 @@ public class AgentBootstrap {
         File f = new File(useArgs.get("raspCoreJar"));
         initLogPath(f, useArgs.get("pid"));
         //解决log4j  在不同线程初始化的问题
+        ps.println("change Thread.currentThread.ContextClassLoader ,use RaspClassLoader");
         Thread.currentThread().setContextClassLoader(agentLoader);
         Class<?> bootstrapClass = agentLoader.loadClass(RASP_BOOTSTRAP);
-        Object bootstrap = bootstrapClass.getMethod(GET_INSTANCE, Instrumentation.class, String.class).invoke(null, inst, useArgs.get("action"));
-        boolean isBind = (Boolean) bootstrapClass.getMethod(IS_BIND).invoke(bootstrap);
-        if (!isBind) {
-            String errorMsg = "rasp server port binding failed! Please check $HOME/logs/rasp/rasp-agent.log for more details.";
-            ps.println(errorMsg + " AgentBootStrap#bind");
-            throw new RuntimeException(errorMsg);
+        String action = useArgs.get("action");
+        Object bootstrap = bootstrapClass.getMethod(GET_INSTANCE, Instrumentation.class, String.class).invoke(null, inst, action);
+        if ("install".equals(action)) {
+            boolean isBind = (Boolean) bootstrapClass.getMethod(IS_BIND).invoke(bootstrap);
+            if (!isBind) {
+                String errorMsg = "rasp server port binding failed! Please check $HOME/logs/rasp/rasp-agent.log for more details." + " AgentBootStrap#bind";
+                ps.println(errorMsg);
+                throw new RuntimeException(errorMsg);
+            }
+            ps.println("rasp server already bind. AgentBootStrap#bind");
+        } else if ("uninstall".equals(action)) {
+            ps.println("rasp server already unload. AgentBootStrap#bind");
+        } else {
+            throw new RuntimeException("unknown action: " + action);
         }
-        ps.println("rasp server already bind. AgentBootStrap#bind");
+
     }
 
     private static String decodeArg(String arg) {
