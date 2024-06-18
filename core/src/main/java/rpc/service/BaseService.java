@@ -41,10 +41,16 @@ public abstract class BaseService {
 
     /**
      * 适配原来的代码 默认使用rpc
-     *
+     * 懒加载
      * @return
      */
     public static BaseService getInstance() {
+        try {
+            Class.forName("rpc.service.RpcService");
+            Class.forName("rpc.service.ZeroMQService");
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
         return getInstance("rpc");
     }
 
