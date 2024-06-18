@@ -12,7 +12,6 @@ import rpc.bean.RaspConfig;
 import rpc.bean.RaspInfo;
 import rpc.job.SendRaspEventLogJob;
 import rpc.job.UpdateRaspConfigJob;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;

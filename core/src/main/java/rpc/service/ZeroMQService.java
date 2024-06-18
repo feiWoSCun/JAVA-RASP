@@ -36,6 +36,7 @@ public class ZeroMQService extends BaseService {
         ThreadPool.exec(new SendRaspEventLogJob());
     }
 
+    @Override
     public void close() {
         this.socket.close();
         this.context.term();
@@ -74,7 +75,7 @@ public class ZeroMQService extends BaseService {
         String raspConfigStr = new Gson().toJson(configRequest);
         LogTool.debug("heart beat msg：" + raspConfigStr);
         try {
-            String val = ThreadPool.submitAndGet(() -> sendAndGet(MqEnums.UPDATE.getVal()));
+            String val = sendAndGet(MqEnums.UPDATE.getVal());
             RaspConfig config = new Gson().fromJson(val, RaspConfig.class);
             if (config != null && config.getRaspInfo() != null && config.getRaspInfo().getPid() != null && config.getRaspInfo().getPid().equals(raspConfig.getRaspInfo().getPid())) {
                 if (config.getId() != null && !config.getId().equals(raspConfig.getId())) {
@@ -95,10 +96,10 @@ public class ZeroMQService extends BaseService {
         String eventStr = new Gson().toJson(memShellEventLog);
         LogTool.info("send log msg：" + eventStr);
         try {
-            String response = ThreadPool.submitAndGet(() -> sendAndGet(new Gson().toJson(memShellEventLog)));
+            String response = sendAndGet(new Gson().toJson(memShellEventLog));
             LogTool.info("call_upload_rasp_log response: " + response);
         } catch (Exception e) {
-            e.printStackTrace();
+            LogTool.error(ErrorType.UPDATE_DATA_ERROR, "sendRaspEventLog error at ZeroMQService#sendRaspEventLog", e);
         }
     }
 
