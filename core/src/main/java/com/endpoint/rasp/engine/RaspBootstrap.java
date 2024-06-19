@@ -1,6 +1,7 @@
 package com.endpoint.rasp.engine;
 
 import com.endpoint.rasp.common.AnsiLog;
+import com.endpoint.rasp.engine.checker.CheckerManager;
 import com.endpoint.rasp.engine.common.log.LogTool;
 import com.endpoint.rasp.engine.transformer.CustomClassTransformer;
 import org.apache.log4j.PropertyConfigurator;
@@ -34,8 +35,17 @@ public class RaspBootstrap {
      * @throws Exception
      */
     public static synchronized RaspBootstrap getInstance(Instrumentation inst, String action) throws Exception {
+        //用户连续多次卸载
+        if ("uninstall".equals(action) && INSTANCE == null) {
+            return null;
+        }
+        //用户连续多次安装
+        if ("install".equals(action) && INSTANCE != null) {
+            return INSTANCE;
+        }
         if (INSTANCE == null) {
             INSTANCE = new RaspBootstrap(inst, action);
+            AnsiLog.info(AnsiLog.red("RaspBootstrap instance created，the classloader is：" + INSTANCE.getClass().getClassLoader()));
         }
         //执行卸载
         if ("uninstall".equals(action)) {
@@ -46,7 +56,6 @@ public class RaspBootstrap {
                 throw new RuntimeException("RaspBootstrap release failed RaspBootstrap#getInstance: " + e.getMessage());
             }
         }
-        AnsiLog.info(AnsiLog.red("RaspBootstrap instance created，the classloader is：" + INSTANCE.getClass().getClassLoader()));
         return INSTANCE;
     }
 
@@ -89,14 +98,14 @@ public class RaspBootstrap {
     }
 
     public void release() {
-//        CpuMonitorManager.release();//停止CPU资源监控
+// CpuMonitorManager.release();//停止CPU资源监控
         BaseService.getInstance().close();
         if (transformer != null) {
             transformer.release();
         }
-        INSTANCE=null;
+        INSTANCE = null;
         //清除所有检测引擎
-        //   CheckerManager.release();
+        CheckerManager.release();
 
     }
 

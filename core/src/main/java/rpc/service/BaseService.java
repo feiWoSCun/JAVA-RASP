@@ -30,7 +30,6 @@ public abstract class BaseService {
     /**
      * 适配原来的代码 默认使用rpc
      * 懒加载
-     *
      * @return
      */
     public static BaseService getInstance() {

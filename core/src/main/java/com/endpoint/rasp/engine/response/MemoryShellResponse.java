@@ -4,6 +4,7 @@ import com.endpoint.rasp.engine.checker.CheckParameter;
 import com.endpoint.rasp.engine.checker.info.EventInfo;
 import com.endpoint.rasp.engine.checker.info.MemoryShellInfo;
 import com.endpoint.rasp.engine.common.log.ErrorType;
+import com.endpoint.rasp.engine.common.log.ExceptionModel;
 import com.endpoint.rasp.engine.common.log.LogTool;
 import rpc.bean.RPCMemShellEventLog;
 import rpc.job.SendRaspEventLogJob;
@@ -23,17 +24,17 @@ public class MemoryShellResponse {
         return instance;
     }
 
-    public  void doResponse(EventInfo info,CheckParameter parameter){
+    public void doResponse(EventInfo info, CheckParameter parameter) {
 
         //System.out.println(new ExceptionModel(ErrorType.ATTACK_MEMORY_SHELL_WARNNING, ErrorType.ATTACK_MEMORY_SHELL_WARNNING.getMessage() + ",detail:" + info.toString()));
-        LogTool.warn(ErrorType.ATTACK_MEMORY_SHELL_WARNNING,ErrorType.ATTACK_MEMORY_SHELL_WARNNING.getMessage()+",detail:"+info.toString());
-        if (info!=null) {
+        LogTool.warn(ErrorType.ATTACK_MEMORY_SHELL_WARNNING, ErrorType.ATTACK_MEMORY_SHELL_WARNNING.getMessage() + ",detail:" + info.toString());
+        if (info != null) {
             //发送内存马告警
-            if(info instanceof MemoryShellInfo){
-                MemoryShellInfo memoryShellInfo = (MemoryShellInfo)info;
-                SendRaspEventLogJob.addLog(new RPCMemShellEventLog(memoryShellInfo.isBlock(),memoryShellInfo.getMessage(),memoryShellInfo.getClassName(),memoryShellInfo.getClassPath(),memoryShellInfo.getStackTrace()));
+            if (info instanceof MemoryShellInfo) {
+                MemoryShellInfo memoryShellInfo = (MemoryShellInfo) info;
+                SendRaspEventLogJob.addLog(new RPCMemShellEventLog(memoryShellInfo.isBlock(), memoryShellInfo.getMessage(), memoryShellInfo.getClassName(), memoryShellInfo.getClassPath(), memoryShellInfo.getStackTrace()));
             }
-            if(info.isBlock()){
+            if (info.isBlock()) {
                 //阻断响应
                 handleBlock(parameter);
             }

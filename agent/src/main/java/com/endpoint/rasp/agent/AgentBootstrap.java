@@ -65,7 +65,7 @@ public class AgentBootstrap {
         main(args, inst);
     }
 
-    public static void agentmain(String args, Instrumentation inst) {
+        public static void agentmain(String args, Instrumentation inst) {
         main(args, inst);
     }
 
@@ -208,6 +208,12 @@ public class AgentBootstrap {
             }
             ps.println("rasp server already bind. AgentBootStrap#bind");
         } else if ("uninstall".equals(action)) {
+            if (bootstrap!=null) {
+                String errorMsg = "rasp server unload failed! Please check logs/rasp/rasp-pid.log for more details." + " AgentBootStrap#bind";
+                ps.println(errorMsg);
+                throw new RuntimeException(errorMsg);
+            }
+
             ps.println("rasp server already unload. AgentBootStrap#bind");
         } else {
             throw new RuntimeException("unknown action: " + action);
