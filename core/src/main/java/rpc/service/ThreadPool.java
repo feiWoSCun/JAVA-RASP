@@ -50,7 +50,7 @@ public class ThreadPool {
     }
 
     static {
-        ThreadPoolExecutor executor = new ThreadPoolExecutor(1, 1, 30, TimeUnit.MINUTES, new ArrayBlockingQueue<>(5));
+        ThreadPoolExecutor executor = new ThreadPoolExecutor(5, 10, 30, TimeUnit.MINUTES, new ArrayBlockingQueue<Runnable>(5));
         executor.setThreadFactory(new ThreadFactoryAutoLogError(Executors.defaultThreadFactory()));
         threadPoolExecutor = executor;
     }
