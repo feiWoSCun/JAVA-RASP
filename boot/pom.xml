@@ -62,6 +62,6 @@
                 </executions>
             </plugin>
         </plugins>
-        <finalName>boot</finalName>
+        <finalName>e-rasp</finalName>
     </build>
 </project>

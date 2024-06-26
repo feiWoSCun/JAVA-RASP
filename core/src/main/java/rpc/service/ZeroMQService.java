@@ -1,6 +1,6 @@
 package rpc.service;
 
-import com.endpoint.rasp.engine.RaspBootstrap;
+import com.endpoint.rasp.engine.EngineBoot;
 import com.endpoint.rasp.engine.common.log.ErrorType;
 import com.endpoint.rasp.engine.common.log.LogTool;
 import com.google.gson.Gson;
@@ -27,10 +27,10 @@ public class ZeroMQService extends BaseService {
         beans.put("jeroMq", INSTANCE);
     }
 
-    public void init(RaspBootstrap boot) {
+    public void init(EngineBoot boot) {
         login();
         raspBootStrap = boot;
-        RaspInfo raspInfo = new RaspInfo(RaspBootstrap.raspPid, RaspBootstrap.raspServerType, RaspBootstrap.VERSION);
+        RaspInfo raspInfo = new RaspInfo(EngineBoot.raspPid, EngineBoot.raspServerType, EngineBoot.VERSION);
         raspConfig.setRaspInfo(raspInfo);
         ThreadPool.exec(new UpdateRaspConfigJob());
         ThreadPool.exec(new SendRaspEventLogJob());
@@ -49,7 +49,7 @@ public class ZeroMQService extends BaseService {
     }
 
     @Override
-    public void init(RaspBootstrap boot, String libPath) {
+    public void init(EngineBoot boot, String libPath) {
         this.init(boot);
     }
 

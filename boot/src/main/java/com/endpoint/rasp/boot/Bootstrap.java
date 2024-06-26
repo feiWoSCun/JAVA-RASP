@@ -22,9 +22,13 @@ public class Bootstrap {
     private static final String ARG2 = "-home";
     public static final String ARG4 = "-action";
     public static final String ARG5 = "-pid";
+    public static final String ARG6 = "-ip";
+    public static final String ARG7 = "-port";
     private static final String CORE_NAME = "rasp-core-shade.jar";
     private static final String AGENT_JAR = "agent.jar";
     private static String pid = "-1";
+    private static String ip = "127.0.0.1";
+    private static String port = "10573";
     private String install;
 
     static {
@@ -62,6 +66,8 @@ public class Bootstrap {
             options.addOption("pid", true, "Specify the pid of Java server to attach");
             options.addOption("install", true, "execute install，specify the path of e-rasp");
             options.addOption("uninstall", true, "execute uninstall，specify the path of e-rasp");
+/*            options.addOption("ip", true, "Specify the ip of Java server to attach");
+            options.addOption("port", true, "Specify the port of Java server to attach");*/
             //解析命令调用
             CommandLineParser parser = new DefaultParser();
             CommandLine cmd = parser.parse(options, args);
@@ -79,6 +85,12 @@ public class Bootstrap {
             } else {
                 AnsiLog.error("One of -install and -uninstall must be specified");
                 returnWrongMsg();
+            }
+            if (cmd.hasOption("ip")) {
+                ip = cmd.getOptionValue("ip");
+            }
+            if (cmd.hasOption("port")) {
+                port = cmd.getOptionValue("port");
             }
             //获取进程ID
             if (cmd.hasOption("pid") && this.checkPid(pid)) {
@@ -103,7 +115,7 @@ public class Bootstrap {
     }
 
     /**
-     * pid一定放在最后
+     *
      * @param command
      * @param install
      */
@@ -114,9 +126,13 @@ public class Bootstrap {
         command.add(ARG2);
         command.add(RASP_HOME_DIR.getAbsolutePath());
         command.add(ARG4);
-        command.add("install".equals(install)?install:"uninstall");
+        command.add("install".equals(install) ? install : "uninstall");
         command.add(ARG5);
         command.add(pid);
+        command.add(ARG6);
+        command.add(ip);
+        command.add(ARG7);
+        command.add(port);
     }
 
 

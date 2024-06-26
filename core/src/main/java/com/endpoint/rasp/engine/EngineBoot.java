@@ -7,7 +7,10 @@ import com.endpoint.rasp.engine.transformer.CustomClassTransformer;
 import org.apache.log4j.PropertyConfigurator;
 import rpc.service.BaseService;
 
+import java.io.File;
 import java.lang.instrument.Instrumentation;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -16,7 +19,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @email: 2825097536@qq.com
  * @description:
  */
-public class RaspBootstrap {
+public class EngineBoot {
+    public static final String ACTION = "action";
+    public static final String UNINSTALL = "uninstall";
+    public static final String INSTALL = "install";
+    public static final String HOME = "home";
+    public static final String LIB = "lib";
     private CustomClassTransformer transformer;
     private final Instrumentation instrumentation;
     /**
@@ -24,36 +32,40 @@ public class RaspBootstrap {
      */
     public static String raspPid;
     private final AtomicBoolean isBindRef = new AtomicBoolean(false);
-    public static RaspBootstrap INSTANCE;
+    public static EngineBoot INSTANCE;
     public static String raspServerType = null;
     public static int VERSION = 1;
+    public static Map<String, String> args;
 
     /**
-     * @param inst   tools.jar工具
-     * @param action 安装或者卸载
+     * @param inst tools.jar工具
+     * @param args 参数
      * @return 单例
      * @throws Exception
      */
-    public static synchronized RaspBootstrap getInstance(Instrumentation inst, String action) throws Exception {
+    public static synchronized EngineBoot getInstance(Instrumentation inst, Map<String, String> args) throws Exception {
+        EngineBoot.args = args;
         //用户连续多次卸载
-        if ("uninstall".equals(action) && INSTANCE == null) {
+        String action = EngineBoot.args.get(ACTION);
+
+        if (UNINSTALL.equals(action) && INSTANCE == null) {
             return null;
         }
         //用户连续多次安装
-        if ("install".equals(action) && INSTANCE != null) {
+        if (INSTALL.equals(action) && INSTANCE != null) {
             return INSTANCE;
         }
         if (INSTANCE == null) {
-            INSTANCE = new RaspBootstrap(inst, action);
-            AnsiLog.info(AnsiLog.red("RaspBootstrap instance created，the classloader is：" + INSTANCE.getClass().getClassLoader()));
+            INSTANCE = new EngineBoot(inst, action);
+            AnsiLog.info(AnsiLog.red("EngineBoot instance created，the classloader is：" + INSTANCE.getClass().getClassLoader()));
         }
         //执行卸载
-        if ("uninstall".equals(action)) {
+        if (UNINSTALL.equals(action)) {
             try {
                 INSTANCE.release();
             } catch (Exception e) {
-                LogTool.info("RaspBootstrap release failed: " + e.getMessage());
-                throw new RuntimeException("RaspBootstrap release failed RaspBootstrap#getInstance: " + e.getMessage());
+                LogTool.info("EngineBoot release failed: " + e.getMessage());
+                throw new RuntimeException("EngineBoot release failed EngineBoot#getInstance: " + e.getMessage());
             }
         }
         return INSTANCE;
@@ -64,8 +76,8 @@ public class RaspBootstrap {
      * @param inst
      * @throws Exception
      */
-    public RaspBootstrap(Instrumentation inst, String action) throws Exception {
-        AnsiLog.info("load agent success,RaspBootstrap: it`s classloader :" + RaspBootstrap.class.getClassLoader());
+    public EngineBoot(Instrumentation inst, String action) throws Exception {
+        AnsiLog.info("load agent success,EngineBoot: it`s classloader :" + EngineBoot.class.getClassLoader());
         this.instrumentation = inst;
         PropertyConfigurator.configure(this.getClass().getResourceAsStream("/log4j.properties"));
         if (!loadConfig()) {
@@ -92,9 +104,26 @@ public class RaspBootstrap {
         }).start();*/
         //RPC服务初始化，连接EDRAgent,并创建心跳
         //TODO 单机测试关闭Agent通信
-        //BaseService.getInstance().init(this, baseDir + File.separator + "lib" + File.separator);
+        initIpAndPort();
+        BaseService.getInstance().init(this, args.get(HOME) + File.separator + LIB + File.separator);
 
         AnsiLog.info("[E-RASP] Engine Initialized ");
+    }
+
+    private void initIpAndPort() {
+
+        String ipAdder = System.getProperty("ip");
+        String pt = System.getProperty("port");
+        LogTool.info("get args from System.getProperty,ip:" + ipAdder + ",port:" + pt);
+        Optional.ofNullable(ipAdder).ifPresent(t -> BaseService.ip = t);
+        Optional.ofNullable(pt).ifPresent(t -> BaseService.port = t);
+        //优先使用-D参数
+        String ip = args.get("-ip");
+        String port = args.get("-port");
+        LogTool.info("get args from java -D,ip:" + ipAdder + ",port:" + pt);
+        Optional.ofNullable(ip).ifPresent(t -> BaseService.ip = t);
+        Optional.ofNullable(port).ifPresent(t -> BaseService.port = t);
+
     }
 
     public void release() {

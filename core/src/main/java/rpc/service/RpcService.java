@@ -1,6 +1,6 @@
 package rpc.service;
 
-import com.endpoint.rasp.engine.RaspBootstrap;
+import com.endpoint.rasp.engine.EngineBoot;
 import com.endpoint.rasp.engine.common.log.ErrorType;
 import com.endpoint.rasp.engine.common.log.LogTool;
 import com.google.gson.Gson;
@@ -37,7 +37,7 @@ public class RpcService extends BaseService {
     /**
      * init
      */
-    public void init(RaspBootstrap boot, String libpath) {
+    public void init(EngineBoot boot, String libpath) {
         boolean is_jvm_64 = "64".equals(System.getProperty("sun.arch.data.model")) ? true : false;
         System.out.println(libpath);
         if (IS_WIN32()) {
@@ -63,7 +63,7 @@ public class RpcService extends BaseService {
             }
         }
         raspBootStrap = boot;
-        RaspInfo raspInfo = new RaspInfo(RaspBootstrap.raspPid, RaspBootstrap.raspServerType, RaspBootstrap.VERSION);
+        RaspInfo raspInfo = new RaspInfo(EngineBoot.raspPid, EngineBoot.raspServerType, EngineBoot.VERSION);
         raspConfig.setRaspInfo(raspInfo);
         login();//初始化执行登陆
         //TODO 待修改为线程池

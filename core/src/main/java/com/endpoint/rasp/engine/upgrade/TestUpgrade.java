@@ -1,6 +1,6 @@
 package com.endpoint.rasp.engine.upgrade;
 
-import com.endpoint.rasp.engine.RaspBootstrap;
+import com.endpoint.rasp.engine.EngineBoot;
 
 /**
  * 测试引擎升级
@@ -10,7 +10,7 @@ public class TestUpgrade {
     /**
      * 周期性执行引擎更新
      */
-    public static void upgradeCycle(final RaspBootstrap boot){
+    public static void upgradeCycle(final EngineBoot boot){
 //        new Thread(new Runnable() {
 //            @Override
 //            public void run() {

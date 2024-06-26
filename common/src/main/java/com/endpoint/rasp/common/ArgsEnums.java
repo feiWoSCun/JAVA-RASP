@@ -2,8 +2,6 @@ package com.endpoint.rasp.common;
 
 import java.util.Arrays;
 import java.util.Map;
-import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -14,14 +12,15 @@ import java.util.stream.Collectors;
  */
 public enum ArgsEnums {
 
-    ACTION("-action",true),
-    PID("-pid",true),
-    HOME("-home",true);
-
+    ACTION("-action", true),
+    PID("-pid", true),
+    HOME("-home", true),
+    IP("-ip", true),
+    PORT("-port", true);
     private String k;
     private boolean need;
 
-    ArgsEnums(String k,boolean need) {
+    ArgsEnums(String k, boolean need) {
         this.need = need;
         this.k = k;
     }
@@ -38,10 +37,10 @@ public enum ArgsEnums {
         return need;
     }
 
-    public static Map<String,Boolean> cache;
+    public static Map<String, Boolean> cache;
 
     static {
         cache = Arrays.stream(ArgsEnums.values()).collect(Collectors.toMap(ArgsEnums::getK, ArgsEnums::isNeed));
     }
 
-}
+    }

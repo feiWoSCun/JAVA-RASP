@@ -24,9 +24,18 @@ public class AgentBootstrap {
     private static final String RASP_BOOTSTRAP = "com.endpoint.rasp.engine.RaspBootstrap";
     private static final String GET_INSTANCE = "getInstance";
     private static final String IS_BIND = "isBind";
+    public static final String HOME = "-home";
+    public static final String RASP_CORE_SHADE_JAR = "/rasp-core-shade.jar";
+    public static final String AGENT_JAR = "/agent.jar";
+    public static final String ACTION = "-action";
+    public static final String INSTALL = "install";
+    public static final String PID = "-pid";
+    public static final String UNINSTALL = "uninstall";
     private static PrintStream ps = System.err;
     private static volatile ClassLoader raspClassLoader;
     private static Map<String, String> useArgs;
+
+    public static final String LOGS_RASP_AGENT_LOG = "logs/rasp-agent.log";
 
     //agent日志文件 把PrintStream重定向到rasp-agent.log
     static {
@@ -35,7 +44,7 @@ public class AgentBootstrap {
             File agentJarPath;
             agentJarPath = new File(codeSource.getLocation().toURI().getSchemeSpecificPart());
             String raspLogDir = agentJarPath.getParentFile().getAbsolutePath();
-            File logFile = new File(raspLogDir, "logs/rasp-agent.log");
+            File logFile = new File(raspLogDir, LOGS_RASP_AGENT_LOG);
             File logDir = logFile.getParentFile();
             if (!logDir.exists()) {
                 if (!logDir.mkdirs()) {
@@ -65,7 +74,7 @@ public class AgentBootstrap {
         main(args, inst);
     }
 
-        public static void agentmain(String args, Instrumentation inst) {
+    public static void agentmain(String args, Instrumentation inst) {
         main(args, inst);
     }
 
@@ -77,7 +86,7 @@ public class AgentBootstrap {
             args = decodeArg(args);
 
             useArgs = parseArgs(args);
-            File raspCoreJarFile = new File(useArgs.get("raspCoreJar"));
+            File raspCoreJarFile = new File(useArgs.get(HOME) + RASP_CORE_SHADE_JAR);
             // 如果 rasp-core 的 jar 文件不存在
             if (!raspCoreJarFile.exists()) {
                 // 打印错误信息，提示找不到指定的 rasp-core jar 文件
@@ -114,8 +123,8 @@ public class AgentBootstrap {
 
             final ClassLoader agentLoader = getClassLoader(inst, raspCoreJarFile);
 
-            inst.appendToBootstrapClassLoaderSearch(new JarFile(useArgs.get("raspCoreJar")));
-            inst.appendToBootstrapClassLoaderSearch(new JarFile(useArgs.get("agentJar")));
+            inst.appendToBootstrapClassLoaderSearch(new JarFile(useArgs.get(HOME) + RASP_CORE_SHADE_JAR));
+            inst.appendToBootstrapClassLoaderSearch(new JarFile(useArgs.get(HOME) + AGENT_JAR));
             Thread bindingThread = new Thread(() -> {
                 try {
                     bind(inst, agentLoader, useArgs);
@@ -157,31 +166,30 @@ public class AgentBootstrap {
         final Map<String, String> map = new HashMap<>(4);
         final String[] split = args.split(";");
 
-        //这里写死了 后续要添加参数还要在这里加
-        if (split.length >= 4) {
-            Optional.ofNullable(split[0]).ifPresent(t -> identifyArg(t, map, "raspCoreJar"));
-            Optional.ofNullable(split[1]).ifPresent(t -> identifyArg(t, map, "agentJar"));
-            Optional.ofNullable(split[2]).ifPresent(t -> identifyArg(t, map, "pid"));
-            Optional.ofNullable(split[3]).ifPresent(t -> identifyArg(t, map, "action"));
-        } else {
-            ps.println("Parameters are missing：：pid ,raspCoreJarPath,agentJar，plz check method AgentBootStrap#parseArgs");
-            System.exit(1);
+
+        for (int i = 0; i < split.length; ) {
+            final int finalI = i;
+            Optional.ofNullable(split[i]).ifPresent(k -> {
+                assert split[finalI + 1] != null;
+                identifyArg(split[finalI + 1], map, k);
+            });
+            i += 2;
         }
+
         return map;
     }
 
-    private static void identifyArg(String t, Map<String, String> map, String k) {
-        if (t.isEmpty()) {
+    private static void identifyArg(String v, Map<String, String> map, String k) {
+        if (v.isEmpty()) {
             ps.println("parse null value! AgentBootStrap#parseArgs");
             System.exit(1);
         }
-        map.put(k, t);
+        map.put(k, v);
     }
 
 
-    private static void initLogPath(File agentPath, String pid) {
-        String logHome = agentPath.getParent();
-        System.setProperty("log-path", logHome + File.separator + "logs" + File.separator + "rasp" + pid + ".log");
+    private static void initLogPath(File home, String pid) {
+        System.setProperty("log-path", home + File.separator + "logs" + File.separator + "rasp" + pid + ".log");
 
     }
 
@@ -191,15 +199,15 @@ public class AgentBootstrap {
          * raspBootstrap bootstrap = raspBootstrap.getInstance(inst);
          * </pre>
          */
-        File f = new File(useArgs.get("raspCoreJar"));
-        initLogPath(f, useArgs.get("pid"));
+        File home = new File(useArgs.get(HOME));
+        initLogPath(home, useArgs.get(PID));
         //解决log4j  在不同线程初始化的问题
         ps.println("change Thread.currentThread.ContextClassLoader ,use RaspClassLoader");
         Thread.currentThread().setContextClassLoader(agentLoader);
         Class<?> bootstrapClass = agentLoader.loadClass(RASP_BOOTSTRAP);
-        String action = useArgs.get("action");
-        Object bootstrap = bootstrapClass.getMethod(GET_INSTANCE, Instrumentation.class, String.class).invoke(null, inst, action);
-        if ("install".equals(action)) {
+        String action = useArgs.get(ACTION);
+        Object bootstrap = bootstrapClass.getMethod(GET_INSTANCE, Instrumentation.class, Map.class).invoke(null, inst, useArgs);
+        if (INSTALL.equals(action)) {
             boolean isBind = (Boolean) bootstrapClass.getMethod(IS_BIND).invoke(bootstrap);
             if (!isBind) {
                 String errorMsg = "rasp server port binding failed! Please check $HOME/logs/rasp/rasp-agent.log for more details." + " AgentBootStrap#bind";
@@ -207,8 +215,8 @@ public class AgentBootstrap {
                 throw new RuntimeException(errorMsg);
             }
             ps.println("rasp server already bind. AgentBootStrap#bind");
-        } else if ("uninstall".equals(action)) {
-            if (bootstrap!=null) {
+        } else if (UNINSTALL.equals(action)) {
+            if (bootstrap != null) {
                 String errorMsg = "rasp server unload failed! Please check logs/rasp/rasp-pid.log for more details." + " AgentBootStrap#bind";
                 ps.println(errorMsg);
                 throw new RuntimeException(errorMsg);

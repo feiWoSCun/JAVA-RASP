@@ -1,7 +1,7 @@
 package rpc.service;
 
 
-import com.endpoint.rasp.engine.RaspBootstrap;
+import com.endpoint.rasp.engine.EngineBoot;
 import com.endpoint.rasp.engine.checker.CheckParameter;
 import com.endpoint.rasp.engine.checker.CheckerManager;
 import com.endpoint.rasp.engine.common.constant.MemoryShellConstant;
@@ -19,11 +19,10 @@ import java.util.Map;
  */
 public abstract class BaseService {
 
-    //TODO 需调整为配置
-    protected String ip = "127.0.0.1";
-    protected String port = "10573";
+    public static String ip = "127.0.0.1";
+    public static String port = "10573";
     protected static RaspConfig raspConfig = new RaspConfig();
-    protected RaspBootstrap raspBootStrap;
+    protected EngineBoot raspBootStrap;
     protected int warning_times = 0;
     protected static Map<String, BaseService> beans = new HashMap<>(2);
 
@@ -33,13 +32,8 @@ public abstract class BaseService {
      * @return
      */
     public static BaseService getInstance() {
-        try {
-            Class.forName("rpc.service.RpcService");
-            Class.forName("rpc.service.ZeroMQService");
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-        return getInstance("rpc");
+
+        return getInstance("jeroMq");
     }
 
     public BaseService(String port, String ip) {
@@ -55,7 +49,13 @@ public abstract class BaseService {
     }
 
 
-    private static BaseService getInstance(String name) {
+    public static BaseService getInstance(String name) {
+        try {
+            Class.forName("rpc.service.RpcService");
+            Class.forName("rpc.service.ZeroMQService");
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
         return beans.get(name);
     }
 
@@ -64,7 +64,7 @@ public abstract class BaseService {
     /**
      * init
      */
-    public abstract void init(RaspBootstrap boot, String libpath) throws InterruptedException;
+    public abstract void init(EngineBoot boot, String libpath) throws InterruptedException;
 
     /**
      * 连接

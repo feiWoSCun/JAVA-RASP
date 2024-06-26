@@ -33,7 +33,7 @@ public class CheckerManager {
         if(CheckerManager.checkers==null){
             checkers = new EnumMap<CheckParameter.Type, Checker>(CheckParameter.Type.class);
         }
-        if(CheckerManager.checkers.size()==0){
+        if(CheckerManager.checkers.isEmpty()){
             init();
         }
         CheckerManager.checkers.get(type).setCanBlock(canBlock);

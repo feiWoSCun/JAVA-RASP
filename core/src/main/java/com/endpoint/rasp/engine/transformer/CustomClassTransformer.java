@@ -1,6 +1,6 @@
 package com.endpoint.rasp.engine.transformer;
 
-import com.endpoint.rasp.engine.RaspBootstrap;
+import com.endpoint.rasp.engine.EngineBoot;
 import com.endpoint.rasp.engine.common.annotation.AnnotationScanner;
 import com.endpoint.rasp.engine.common.annotation.HookAnnotation;
 import com.endpoint.rasp.engine.common.log.ErrorType;
@@ -117,7 +117,7 @@ public class CustomClassTransformer implements ClassFileTransformer {
 //        Class[] loadedClasses = inst.getAllLoadedClasses();
 //        for (Class clazz : loadedClasses) {
 //            //是否为com.endpoint.rasp.engine包下面的类
-//            if (clazz.getName().contains("engine")&&!clazz.getName().contains("CustomClassTransformer")&&!clazz.getName().contains("RaspBootstrap")&&!clazz.getName().contains("CheckParameter$Type")&&!clazz.getName().contains("ErrorType")&&!clazz.getName().contains("log4j")) {
+//            if (clazz.getName().contains("engine")&&!clazz.getName().contains("CustomClassTransformer")&&!clazz.getName().contains("EngineBoot")&&!clazz.getName().contains("CheckParameter$Type")&&!clazz.getName().contains("ErrorType")&&!clazz.getName().contains("log4j")) {
 //                try {
 ////                    inst.redefineClasses();
 //                    // 刷新clazz
@@ -243,7 +243,7 @@ public class CustomClassTransformer implements ClassFileTransformer {
 
     private void addLoader(ClassPool classPool, ClassLoader loader) {
         classPool.appendSystemPath();
-        classPool.appendClassPath(new ClassClassPath(RaspBootstrap.class));
+        classPool.appendClassPath(new ClassClassPath(EngineBoot.class));
         if (loader != null) {
             classPool.appendClassPath(new LoaderClassPath(loader));
         }

@@ -91,6 +91,7 @@ public class Core {
             //CONFIG.setCorePath();
             try {
                 String options = CONFIG.toString();
+                System.out.println(options);
                 virtualMachine.loadAgent(CONFIG.getAgentPath(), options);
             } catch (IOException e) {
                 if (e.getMessage() != null && e.getMessage().contains("Non-numeric value found")) {

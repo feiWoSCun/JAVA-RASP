@@ -1,9 +1,10 @@
 package com.endpoint.rasp.engine;
 
+import com.endpoint.rasp.common.ArgsEnums;
+
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.HashMap;
-import java.util.Set;
 
 /**
  * @author: feiwoscun
@@ -38,14 +39,14 @@ public class ArgsHashMap extends HashMap<String, String> {
         return this.get("-home") + "/rasp-core-shade.jar";
     }
 
-    @Override
+/*    @Override
     public String toString() {
         Set<Entry<String, String>> entries = this.entrySet();
-       return encodeArg( this.getCorePath() + ";" +
+        return encodeArg(this.getCorePath() + ";" +
                 this.getAgentPath() + ";" +
                 this.getPid() + ";" +
                 this.getAction());
-    }
+    }*/
 
     public String getPid() {
         return this.get(PID);
@@ -53,5 +54,17 @@ public class ArgsHashMap extends HashMap<String, String> {
 
     public String getAction() {
         return this.get(ACTION);
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        for (String s : ArgsEnums.cache.keySet()) {
+            builder.append(s);
+            builder.append(";");
+            builder.append(this.get(s));
+            builder.append(";");
+        }
+        return builder.substring(0, builder.length() - 1);
     }
 }
