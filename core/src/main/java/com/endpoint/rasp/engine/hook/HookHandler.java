@@ -32,9 +32,8 @@ public class HookHandler {
             String msg = "plugin check error: " + e.getClass().getName() + " because: " + e.getMessage();
             LogTool.error(ErrorType.PLUGIN_ERROR, msg, e);
         }
-        MemoryShellResponse.getInstance().doResponse(info,parameter);
+        MemoryShellResponse.getInstance().doResponse(info, parameter);
     }
-
 
 
     /**
@@ -45,10 +44,12 @@ public class HookHandler {
      */
     public static void doCheckWithoutRequest(CheckParameter.Type type, Map params) {
         try {
+
             doRealCheckWithoutRequest(type, params);
         } catch (Throwable t) {
+            LogTool.info(t.getMessage());
             if (t instanceof com.endpoint.rasp.engine.common.exception.SecurityException) {
-                LogTool.warn("Throwing SecurityException, Message: "+t.getMessage());
+                LogTool.warn("Throwing SecurityException, Message: " + t.getMessage());
                 throw (com.endpoint.rasp.engine.common.exception.SecurityException) t;
             }
         }

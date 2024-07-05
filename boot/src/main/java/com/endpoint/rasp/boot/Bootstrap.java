@@ -2,6 +2,7 @@ package com.endpoint.rasp.boot;
 
 
 import com.endpoint.rasp.common.AnsiLog;
+import com.endpoint.rasp.common.constant.RaspArgsConstant;
 import org.apache.commons.cli.*;
 
 import java.io.File;
@@ -9,6 +10,7 @@ import java.net.URISyntaxException;
 import java.security.CodeSource;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * @author: feiwoscun
@@ -18,17 +20,9 @@ import java.util.List;
  */
 public class Bootstrap {
     private static File RASP_HOME_DIR;
-    private static final String ARG1 = "-jar";
-    private static final String ARG2 = "-home";
-    public static final String ARG4 = "-action";
-    public static final String ARG5 = "-pid";
-    public static final String ARG6 = "-ip";
-    public static final String ARG7 = "-port";
-    private static final String CORE_NAME = "rasp-core-shade.jar";
-    private static final String AGENT_JAR = "agent.jar";
     private static String pid = "-1";
     private static String ip = "127.0.0.1";
-    private static String port = "10573";
+    private static String port = "10574";
     private String install;
 
     static {
@@ -98,6 +92,12 @@ public class Bootstrap {
             } else {
                 returnWrongMsg();
             }
+            String pt = System.getProperty("port");
+            AnsiLog.info("get args from System.getProperty,port:"+pt);
+            Optional.ofNullable(pt).ifPresent(t ->port = t);
+            String ipAdder = System.getProperty("ip");
+            AnsiLog.info("get args from System.getProperty,ip:"+ipAdder);
+            Optional.ofNullable(ipAdder).ifPresent(t ->ip = t);
         } catch (ParseException e) {
             throw new RuntimeException(e);
         }
@@ -120,18 +120,18 @@ public class Bootstrap {
      * @param install
      */
     private void setCommand(List<String> command, String install) {
-        final String corePath = new File(RASP_HOME_DIR, CORE_NAME).getAbsolutePath();
-        command.add(ARG1);
+        final String corePath = new File(RASP_HOME_DIR, RaspArgsConstant.CORE_NAME).getAbsolutePath();
+        command.add(RaspArgsConstant._JAR);
         command.add(corePath);
-        command.add(ARG2);
+        command.add(RaspArgsConstant._HOME);
         command.add(RASP_HOME_DIR.getAbsolutePath());
-        command.add(ARG4);
+        command.add(RaspArgsConstant._ACTION);
         command.add("install".equals(install) ? install : "uninstall");
-        command.add(ARG5);
+        command.add(RaspArgsConstant._PID);
         command.add(pid);
-        command.add(ARG6);
+        command.add(RaspArgsConstant._IP);
         command.add(ip);
-        command.add(ARG7);
+        command.add(RaspArgsConstant._PORT);
         command.add(port);
     }
 

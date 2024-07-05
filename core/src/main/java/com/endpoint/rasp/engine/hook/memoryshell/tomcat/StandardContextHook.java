@@ -109,6 +109,8 @@ public class StandardContextHook extends AbstractMRVHook {
                     return;
                 }
                 params.put("stackTrace",StackTrace.getStackTrace().split("\r\n"));
+
+
                 HookHandler.doCheck(CheckParameter.Type.MEMORYSHELL, params);
             }
         }

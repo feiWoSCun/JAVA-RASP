@@ -10,12 +10,15 @@ import rpc.Rasp;
 import rpc.bean.RPCMemShellEventLog;
 import rpc.bean.RaspConfig;
 import rpc.bean.RaspInfo;
+import rpc.enums.ServiceTypeEnum;
 import rpc.job.SendRaspEventLogJob;
 import rpc.job.UpdateRaspConfigJob;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Semaphore;
@@ -26,19 +29,18 @@ import java.util.concurrent.Semaphore;
  * @email: 2825097536@qq.com
  * @description:
  */
-public class RpcService extends BaseService {
+public class RpcService extends BaseService implements ServiceStrategyHandler {
     private String channel_hash;
-    private static final RpcService rpcService = new RpcService();
 
-    static {
-        beans.put("rpc", rpcService);
+    public RpcService() {
+        super();
     }
 
     /**
      * init
      */
     public void init(EngineBoot boot, String libpath) {
-        boolean is_jvm_64 = "64".equals(System.getProperty("sun.arch.data.model")) ? true : false;
+        boolean is_jvm_64 = "64".equals(System.getProperty("sun.arch.data.model"));
         System.out.println(libpath);
         if (IS_WIN32()) {
             if (is_jvm_64) {
@@ -134,7 +136,7 @@ public class RpcService extends BaseService {
         try {
             Rasp rasp = new Rasp();
             ByteArrayOutputStream stream = new ByteArrayOutputStream();
-            long rt = rasp.call_update_rasp_info(channel_hash, raspConfigStr.getBytes(Charset.forName("UTF-8")), stream);
+            long rt = rasp.call_update_rasp_info(channel_hash, raspConfigStr.getBytes(StandardCharsets.UTF_8), stream);
             if (ErrorCode.isFail(rt)) {
                 LogTool.error(ErrorType.HEARTBEAT_ERROR, ErrorCode.desc(rt));
             } else {
@@ -155,7 +157,6 @@ public class RpcService extends BaseService {
     }
 
 
-
     /**
      * 发送Rasp告警
      */
@@ -166,7 +167,7 @@ public class RpcService extends BaseService {
         try {
             Rasp rasp = new Rasp();
             ByteArrayOutputStream stream = new ByteArrayOutputStream();
-            long rt = rasp.call_upload_rasp_log(channel_hash, eventStr.getBytes(Charset.forName("UTF-8")), stream);
+            long rt = rasp.call_upload_rasp_log(channel_hash, eventStr.getBytes(StandardCharsets.UTF_8), stream);
             if (ErrorCode.isFail(rt)) {
                 LogTool.error(ErrorType.UPLOAD_LOG_ERROR, ErrorCode.desc(rt));
             }
@@ -235,7 +236,7 @@ public class RpcService extends BaseService {
      * @return channel_hash，用于调用中心-rpc方法
      */
     public String getRpcChannelHash() {
-        if (channel_hash != null && !"".equals(channel_hash)) {
+        if (channel_hash != null && !channel_hash.isEmpty()) {
             return channel_hash;
         }
         return null;
@@ -286,17 +287,12 @@ public class RpcService extends BaseService {
         return new Gson().toJson(result);
     }
 
-    public String getIp() {
-        return ip;
-    }
-
     public String getChannel_hash() {
         return channel_hash;
     }
 
-    public String getPort() {
-        return port;
+    @Override
+    public ServiceTypeEnum getServiceType() {
+        return ServiceTypeEnum.RPC;
     }
-
-
 }

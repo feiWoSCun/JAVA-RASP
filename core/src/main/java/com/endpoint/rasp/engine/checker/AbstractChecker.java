@@ -2,6 +2,7 @@ package com.endpoint.rasp.engine.checker;
 
 import com.endpoint.rasp.engine.checker.info.EventInfo;
 import com.endpoint.rasp.engine.common.constant.MemoryShellConstant;
+import com.endpoint.rasp.engine.common.log.LogTool;
 
 /**
  * Created by yunchao.zheng on 2023-03-20
@@ -25,7 +26,7 @@ public abstract class AbstractChecker implements Checker {
     @Override
     public EventInfo check(CheckParameter checkParameter) {
         EventInfo info = checkParam(checkParameter);
-        System.out.println(info.getMessage());
+        LogTool.info(info.getMessage());
         boolean isBlock = false;
         //多条告警合并
         if (info!=null) {

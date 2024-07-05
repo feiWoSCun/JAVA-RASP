@@ -1,4 +1,4 @@
-package rpc.service;
+package rpc.enums;
 
 /**
  * @author: feiwoscun
@@ -6,8 +6,10 @@ package rpc.service;
  * @email: 2825097536@qq.com
  * @description:
  */
-public enum MqEnums {
-    UPDATE("1", "请求更新RaspConfig");
+public enum MqEnum {
+    UPDATE_RASP_INFO("update_rasp_info", "request to update RaspConfig......"),
+
+    UPLOAD_LOG("upload_rasp_log", "zero mq message transformer test.....");
 
     private final String desc;
     private final String val;
@@ -20,7 +22,7 @@ public enum MqEnums {
         return val;
     }
 
-    MqEnums(String val, String desc) {
+    MqEnum(String val, String desc) {
         this.val = val;
         this.desc = desc;
     }

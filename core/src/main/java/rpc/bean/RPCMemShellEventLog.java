@@ -4,7 +4,7 @@ package rpc.bean;
  * 上报事件日志
  * Created by yunchao.zheng on 2023-10-12
  */
-public class RPCMemShellEventLog {
+public class RPCMemShellEventLog extends CommandFlag {
 
     /**
      * 调用栈追踪

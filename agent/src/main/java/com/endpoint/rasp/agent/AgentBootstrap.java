@@ -1,5 +1,7 @@
 package com.endpoint.rasp.agent;
 
+import com.endpoint.rasp.common.constant.RaspArgsConstant;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
@@ -20,22 +22,11 @@ import java.util.jar.JarFile;
  * @description: 为什么不使用maven的dependency呢=》想做一个纯净的agent启动类
  */
 public class AgentBootstrap {
-    private static final String RASP_CORE_JAR = "core.jar";
-    private static final String RASP_BOOTSTRAP = "com.endpoint.rasp.engine.RaspBootstrap";
-    private static final String GET_INSTANCE = "getInstance";
-    private static final String IS_BIND = "isBind";
-    public static final String HOME = "-home";
-    public static final String RASP_CORE_SHADE_JAR = "/rasp-core-shade.jar";
-    public static final String AGENT_JAR = "/agent.jar";
-    public static final String ACTION = "-action";
-    public static final String INSTALL = "install";
-    public static final String PID = "-pid";
-    public static final String UNINSTALL = "uninstall";
+    private static final String LOGS_RASP_AGENT_LOG = "logs/rasp-agent.log";
     private static PrintStream ps = System.err;
-    private static volatile ClassLoader raspClassLoader;
+    public static volatile ClassLoader raspClassLoader;
     private static Map<String, String> useArgs;
 
-    public static final String LOGS_RASP_AGENT_LOG = "logs/rasp-agent.log";
 
     //agent日志文件 把PrintStream重定向到rasp-agent.log
     static {
@@ -86,30 +77,19 @@ public class AgentBootstrap {
             args = decodeArg(args);
 
             useArgs = parseArgs(args);
-            File raspCoreJarFile = new File(useArgs.get(HOME) + RASP_CORE_SHADE_JAR);
-            // 如果 rasp-core 的 jar 文件不存在
+            File raspCoreJarFile = new File(useArgs.get(RaspArgsConstant._HOME) + RaspArgsConstant.RASP_CORE_SHADE_JAR);
             if (!raspCoreJarFile.exists()) {
-                // 打印错误信息，提示找不到指定的 rasp-core jar 文件
                 ps.println("Can not find rasp-core jar file from args: " + raspCoreJarFile);
-
-                // 尝试从 rasp-agent.jar 所在的目录查找
                 CodeSource codeSource = AgentBootstrap.class.getProtectionDomain().getCodeSource();
-
                 // 如果 codeSource 不为空
                 if (codeSource != null) {
                     try {
-                        // 获取 rasp-agent.jar 文件的路径
                         File raspAgentJarFile = new File(codeSource.getLocation().toURI().getSchemeSpecificPart());
-
-                        // 在 rasp-agent.jar 所在的目录中查找 rasp-core.jar
-                        raspCoreJarFile = new File(raspAgentJarFile.getParentFile(), RASP_CORE_JAR);
-
-                        // 如果在 rasp-agent.jar 目录中也找不到 rasp-core.jar
+                        raspCoreJarFile = new File(raspAgentJarFile.getParentFile(), RaspArgsConstant.RASP_CORE_JAR);
                         if (!raspCoreJarFile.exists()) {
                             ps.println("Can not find rasp-core jar file from agent jar directory: " + raspAgentJarFile);
                         }
                     } catch (Throwable e) {
-                        // 如果在尝试查找 rasp-core.jar 时发生异常，打印错误信息
                         ps.println("Can not find rasp-core jar file from " + codeSource.getLocation());
                         e.printStackTrace(ps);
                     }
@@ -122,12 +102,11 @@ public class AgentBootstrap {
             }
 
             final ClassLoader agentLoader = getClassLoader(inst, raspCoreJarFile);
-
-            inst.appendToBootstrapClassLoaderSearch(new JarFile(useArgs.get(HOME) + RASP_CORE_SHADE_JAR));
-            inst.appendToBootstrapClassLoaderSearch(new JarFile(useArgs.get(HOME) + AGENT_JAR));
+            inst.appendToBootstrapClassLoaderSearch(new JarFile(useArgs.get(RaspArgsConstant._HOME) + RaspArgsConstant.RASP_CORE_SHADE_JAR));
+            inst.appendToBootstrapClassLoaderSearch(new JarFile(useArgs.get(RaspArgsConstant._HOME) + RaspArgsConstant.AGENT_JAR));
             Thread bindingThread = new Thread(() -> {
                 try {
-                    bind(inst, agentLoader, useArgs);
+                    bind(inst, useArgs);
                 } catch (Throwable throwable) {
                     throwable.printStackTrace(ps);
                 }
@@ -193,35 +172,37 @@ public class AgentBootstrap {
 
     }
 
-    private static void bind(Instrumentation inst, ClassLoader agentLoader, Map<String, String> useArgs) throws Throwable {
+    private static void bind(Instrumentation inst, Map<String, String> useArgs) throws Throwable {
         /**
          * <pre>
          * raspBootstrap bootstrap = raspBootstrap.getInstance(inst);
          * </pre>
          */
-        File home = new File(useArgs.get(HOME));
-        initLogPath(home, useArgs.get(PID));
+        File home = new File(useArgs.get(RaspArgsConstant._HOME));
+        initLogPath(home, useArgs.get(RaspArgsConstant._PID));
         //解决log4j  在不同线程初始化的问题
         ps.println("change Thread.currentThread.ContextClassLoader ,use RaspClassLoader");
-        Thread.currentThread().setContextClassLoader(agentLoader);
-        Class<?> bootstrapClass = agentLoader.loadClass(RASP_BOOTSTRAP);
-        String action = useArgs.get(ACTION);
-        Object bootstrap = bootstrapClass.getMethod(GET_INSTANCE, Instrumentation.class, Map.class).invoke(null, inst, useArgs);
-        if (INSTALL.equals(action)) {
-            boolean isBind = (Boolean) bootstrapClass.getMethod(IS_BIND).invoke(bootstrap);
+        Thread.currentThread().setContextClassLoader(raspClassLoader);
+        Class<?> bootstrapClass = raspClassLoader.loadClass(RaspArgsConstant.RASP_BOOTSTRAP);
+        String action = useArgs.get(RaspArgsConstant._ACTION);
+        Object bootstrap = bootstrapClass.getMethod(RaspArgsConstant.GET_INSTANCE, Instrumentation.class, Map.class, ClassLoader.class)
+                .invoke(null, inst, useArgs, raspClassLoader);
+        if (RaspArgsConstant.INSTALL.equals(action)) {
+            boolean isBind = (Boolean) bootstrapClass.getMethod(RaspArgsConstant.IS_BIND).invoke(bootstrap);
             if (!isBind) {
                 String errorMsg = "rasp server port binding failed! Please check $HOME/logs/rasp/rasp-agent.log for more details." + " AgentBootStrap#bind";
                 ps.println(errorMsg);
                 throw new RuntimeException(errorMsg);
             }
             ps.println("rasp server already bind. AgentBootStrap#bind");
-        } else if (UNINSTALL.equals(action)) {
+        } else if (RaspArgsConstant.UNINSTALL.equals(action)) {
             if (bootstrap != null) {
+                raspClassLoader = null;
                 String errorMsg = "rasp server unload failed! Please check logs/rasp/rasp-pid.log for more details." + " AgentBootStrap#bind";
                 ps.println(errorMsg);
                 throw new RuntimeException(errorMsg);
             }
-
+            raspClassLoader = null;
             ps.println("rasp server already unload. AgentBootStrap#bind");
         } else {
             throw new RuntimeException("unknown action: " + action);

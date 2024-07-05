@@ -5,7 +5,7 @@ package rpc.bean;
  *
  * Created by yunchao.zheng on 2023-10-11
  */
-public class RaspConfig {
+public class RaspConfig extends  CommandFlag{
 
     public RaspConfig(){}
 

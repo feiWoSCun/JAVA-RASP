@@ -1,16 +1,17 @@
 package com.endpoint.rasp.engine;
 
 import com.endpoint.rasp.common.AnsiLog;
+import com.endpoint.rasp.common.constant.RaspArgsConstant;
 import com.endpoint.rasp.engine.checker.CheckerManager;
-import com.endpoint.rasp.engine.common.log.LogTool;
 import com.endpoint.rasp.engine.transformer.CustomClassTransformer;
 import org.apache.log4j.PropertyConfigurator;
-import rpc.service.BaseService;
+import rpc.service.*;
 
 import java.io.File;
 import java.lang.instrument.Instrumentation;
+import java.lang.reflect.Field;
+import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -20,11 +21,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @description:
  */
 public class EngineBoot {
-    public static final String ACTION = "action";
-    public static final String UNINSTALL = "uninstall";
-    public static final String INSTALL = "install";
-    public static final String HOME = "home";
-    public static final String LIB = "lib";
+    public static ClassLoader classLoader;
     private CustomClassTransformer transformer;
     private final Instrumentation instrumentation;
     /**
@@ -38,33 +35,34 @@ public class EngineBoot {
     public static Map<String, String> args;
 
     /**
-     * @param inst tools.jar工具
+     * @param inst from tools.jar
      * @param args 参数
      * @return 单例
      * @throws Exception
      */
-    public static synchronized EngineBoot getInstance(Instrumentation inst, Map<String, String> args) throws Exception {
+    public static synchronized EngineBoot getInstance(Instrumentation inst, Map<String, String> args, ClassLoader classLoader) throws Exception {
         EngineBoot.args = args;
+        EngineBoot.classLoader = classLoader;
         //用户连续多次卸载
-        String action = EngineBoot.args.get(ACTION);
+        String action = args.get(RaspArgsConstant._ACTION);
 
-        if (UNINSTALL.equals(action) && INSTANCE == null) {
+        if (RaspArgsConstant.UNINSTALL.equals(action) && INSTANCE == null) {
             return null;
         }
         //用户连续多次安装
-        if (INSTALL.equals(action) && INSTANCE != null) {
+        if (RaspArgsConstant.INSTALL.equals(action) && INSTANCE != null) {
             return INSTANCE;
         }
         if (INSTANCE == null) {
             INSTANCE = new EngineBoot(inst, action);
-            AnsiLog.info(AnsiLog.red("EngineBoot instance created，the classloader is：" + INSTANCE.getClass().getClassLoader()));
+            AnsiLog.info("EngineBoot instance created，the classloader is：" + INSTANCE.getClass().getClassLoader());
         }
         //执行卸载
-        if (UNINSTALL.equals(action)) {
+        if (RaspArgsConstant.UNINSTALL.equals(action)) {
             try {
                 INSTANCE.release();
             } catch (Exception e) {
-                LogTool.info("EngineBoot release failed: " + e.getMessage());
+                AnsiLog.info("EngineBoot release failed: " + e.getMessage());
                 throw new RuntimeException("EngineBoot release failed EngineBoot#getInstance: " + e.getMessage());
             }
         }
@@ -87,7 +85,6 @@ public class EngineBoot {
             AnsiLog.warn("rasp already bind,plz check if you are rebinding");
             throw new IllegalStateException("rasp already bind,plz check if you are rebinding");
         }
-        //与Agent通信成功后再修改字节码
         initTransformer();
 
         //测试代码：验证字节码是否被重新生成
@@ -102,32 +99,19 @@ public class EngineBoot {
                 transformer.testRetransformHook();
             }
         }).start();*/
-        //RPC服务初始化，连接EDRAgent,并创建心跳
-        //TODO 单机测试关闭Agent通信
-        initIpAndPort();
-        BaseService.getInstance().init(this, args.get(HOME) + File.separator + LIB + File.separator);
-
+        addHandler();
+        BaseService.getInstance().init(this, args.get(RaspArgsConstant._HOME) + File.separator + RaspArgsConstant.LIB + File.separator);
         AnsiLog.info("[E-RASP] Engine Initialized ");
     }
 
-    private void initIpAndPort() {
-
-        String ipAdder = System.getProperty("ip");
-        String pt = System.getProperty("port");
-        LogTool.info("get args from System.getProperty,ip:" + ipAdder + ",port:" + pt);
-        Optional.ofNullable(ipAdder).ifPresent(t -> BaseService.ip = t);
-        Optional.ofNullable(pt).ifPresent(t -> BaseService.port = t);
-        //优先使用-D参数
-        String ip = args.get("-ip");
-        String port = args.get("-port");
-        LogTool.info("get args from java -D,ip:" + ipAdder + ",port:" + pt);
-        Optional.ofNullable(ip).ifPresent(t -> BaseService.ip = t);
-        Optional.ofNullable(port).ifPresent(t -> BaseService.port = t);
-
+    private void addHandler() {
+        ServiceStrategyFactory.addBean(new RpcService());
+        ServiceStrategyFactory.addBean(new ZeroMQService());
     }
 
+
+
     public void release() {
-// CpuMonitorManager.release();//停止CPU资源监控
         BaseService.getInstance().close();
         if (transformer != null) {
             transformer.release();

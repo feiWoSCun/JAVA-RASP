@@ -1,4 +1,4 @@
-package rpc.service;
+package rpc.job;
 
 import com.endpoint.rasp.engine.common.log.ErrorType;
 import com.endpoint.rasp.engine.common.log.LogTool;
@@ -25,6 +25,8 @@ public class ThreadPool {
         @Override
         public Thread newThread(Runnable r) {
             Thread thread = factory.newThread(r);
+            //todo 现在有一个bug，就是说线程池的关闭并不会关闭线程，就是job包里的死循环不会退出，很奇怪。目前的解决方案是设置成守护线程
+            thread.setDaemon(true);
             thread.setUncaughtExceptionHandler(GlobalUncaughtExceptionHandler.getInstance());
             return thread;
         }
@@ -50,11 +52,34 @@ public class ThreadPool {
     }
 
     static {
+
         ThreadPoolExecutor executor = new ThreadPoolExecutor(5, 10, 30, TimeUnit.MINUTES, new ArrayBlockingQueue<Runnable>(5));
         executor.setThreadFactory(new ThreadFactoryAutoLogError(Executors.defaultThreadFactory()));
         threadPoolExecutor = executor;
+        // 注册关闭钩子
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            LogTool.info("Shutdown hook triggered.");
+            shutdownAndAwaitTermination();
+        }));
     }
 
+    private static void shutdownAndAwaitTermination() {
+        ((ExecutorService) ThreadPool.threadPoolExecutor).shutdown(); // Disable new tasks from being submitted
+        try {
+            // Wait a while for existing tasks to terminate
+            if (!((ExecutorService) ThreadPool.threadPoolExecutor).awaitTermination(1, TimeUnit.SECONDS)) {
+                ((ExecutorService) ThreadPool.threadPoolExecutor).shutdownNow(); // Cancel currently executing tasks
+                // Wait a while for tasks to respond to being cancelled
+                if (!((ExecutorService) ThreadPool.threadPoolExecutor).awaitTermination(1, TimeUnit.SECONDS))
+                    LogTool.info("Pool did not terminate");
+            }
+        } catch (InterruptedException ie) {
+            // (Re-)Cancel if current thread also interrupted
+            ((ExecutorService) ThreadPool.threadPoolExecutor).shutdownNow();
+            // Preserve interrupt status
+            Thread.currentThread().interrupt();
+        }
+    }
 
     public static <T> T submitAndGet(Callable<T> task) throws TimeoutException, InterruptedException, ExecutionException {
         Future<T> future = threadPoolExecutor.submit(task);
@@ -75,5 +100,10 @@ public class ThreadPool {
 
     public static void exec(Runnable r) {
         threadPoolExecutor.execute(r);
+    }
+
+    public void startLogPolling() {
+        ThreadPool.exec(new UpdateRaspConfigJob());
+        ThreadPool.exec(new SendRaspEventLogJob());
     }
 }

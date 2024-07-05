@@ -1,10 +1,10 @@
 package com.endpoint.rasp.engine.response;
 
+
 import com.endpoint.rasp.engine.checker.CheckParameter;
 import com.endpoint.rasp.engine.checker.info.EventInfo;
 import com.endpoint.rasp.engine.checker.info.MemoryShellInfo;
 import com.endpoint.rasp.engine.common.log.ErrorType;
-import com.endpoint.rasp.engine.common.log.ExceptionModel;
 import com.endpoint.rasp.engine.common.log.LogTool;
 import rpc.bean.RPCMemShellEventLog;
 import rpc.job.SendRaspEventLogJob;
@@ -32,7 +32,35 @@ public class MemoryShellResponse {
             //发送内存马告警
             if (info instanceof MemoryShellInfo) {
                 MemoryShellInfo memoryShellInfo = (MemoryShellInfo) info;
-                SendRaspEventLogJob.addLog(new RPCMemShellEventLog(memoryShellInfo.isBlock(), memoryShellInfo.getMessage(), memoryShellInfo.getClassName(), memoryShellInfo.getClassPath(), memoryShellInfo.getStackTrace()));
+
+                RPCMemShellEventLog rpcMemShellEventLog = new RPCMemShellEventLog(memoryShellInfo.isBlock(),
+                        memoryShellInfo.getMessage(),
+                        memoryShellInfo.getClassName(),
+                        memoryShellInfo.getClassPath(),
+                        memoryShellInfo.getStackTrace());
+        /*        try {
+                    Field raspClassLoader = ClassLoader.getSystemClassLoader()
+                            .loadClass("com.endpoint.rasp.agent.AgentBootstrap")
+                            .getDeclaredField("raspClassLoader");
+                    raspClassLoader.setAccessible(true);
+                    ClassLoader classLoader = (ClassLoader) raspClassLoader.get(null);
+                    Class<?> aClass = classLoader.loadClass("rpc.job.SendRaspEventLogJob");
+                    Method declaredMethod=null;
+                    for (Method method : aClass.getDeclaredMethods()) {
+                        if(method.getName().equals("addLog")){
+                            declaredMethod=method;
+                            break;
+                        }
+                    }
+                    if (declaredMethod != null) {
+                        declaredMethod.setAccessible(true);
+                        declaredMethod.invoke(null, rpcMemShellEventLog);
+                    }
+                } catch (IllegalAccessException | InvocationTargetException |
+                         ClassNotFoundException | NoSuchFieldException e) {
+                    throw new RuntimeException(e);
+                }*/
+                SendRaspEventLogJob.addLog(rpcMemShellEventLog);
             }
             if (info.isBlock()) {
                 //阻断响应

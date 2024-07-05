@@ -77,7 +77,6 @@ public class CustomClassTransformer implements ClassFileTransformer {
                         // hook已经加载的类，或者是回滚已经加载的类(当转换器还原到默认值，就会执行类的还原)
                         inst.retransformClasses(clazz);
                     } catch (Throwable t) {
-                        t.printStackTrace();
                         LogTool.error(ErrorType.HOOK_ERROR,
                                 "failed to retransform class " + clazz.getName() + ": " + t.getMessage(), t);
                     }
@@ -207,6 +206,7 @@ public class CustomClassTransformer implements ClassFileTransformer {
                         //没有指定构造器，则使用boot构造器
                         hook.setLoadedByBootstrapLoader(true);
                     }*/
+                    hook.setLoadedByBootstrapLoader(true);
                     classfileBuffer = hook.transformClass(ctClass);
                     //TODO 需关闭
                     if ("io/undertow/servlet/handlers/ServletHandler".equals(className)) {

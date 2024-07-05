@@ -206,7 +206,7 @@ public abstract class AbstractClassHook {
             return getConstructor(ctClass, desc);
         }
         LinkedList<CtBehavior> methods = new LinkedList<CtBehavior>();
-        if (desc==null||desc.isEmpty()) {
+        if (desc == null || desc.isEmpty()) {
             CtMethod[] allMethods = ctClass.getDeclaredMethods();
             if (allMethods != null) {
                 for (CtMethod method : allMethods) {
@@ -288,27 +288,27 @@ public abstract class AbstractClassHook {
         String src;
         String invokeClassName = invokeClass.getName();
 
-        String parameterTypesString = "";
+        StringBuilder parameterTypesString = new StringBuilder();
         if (parameterTypes != null && parameterTypes.length > 0) {
             for (Class parameterType : parameterTypes) {
                 if (parameterType.getName().startsWith("[")) {
-                    parameterTypesString += "Class.forName(\"" + parameterType.getName() + "\"),";
+                    parameterTypesString.append("Class.forName(\"").append(parameterType.getName()).append("\"),");
                 } else {
-                    parameterTypesString += (parameterType.getName() + ".class,");
+                    parameterTypesString.append(parameterType.getName()).append(".class,");
                 }
             }
-            parameterTypesString = parameterTypesString.substring(0, parameterTypesString.length() - 1);
+            parameterTypesString = new StringBuilder(parameterTypesString.substring(0, parameterTypesString.length() - 1));
         }
-        if ("".equals(parameterTypesString)) {
+        if (parameterTypesString.toString().isEmpty()) {
             parameterTypesString = null;
         } else {
-            parameterTypesString = "new Class[]{" + parameterTypesString + "}";
+            parameterTypesString = new StringBuilder("new Class[]{" + parameterTypesString + "}");
         }
         //默认都是当前的类加载器
         if (isLoadedByBootstrapLoader) {
-            src = "com.endpoint.rasp.ModuleLoader.moduleClassLoader.loadClass(\"" + invokeClassName + "\").getMethod(\"" + methodName +
+            src = "rpc.ClassloaderUtil.getRaspClassLoader().loadClass(\"" + invokeClassName + "\").getMethod(\"" + methodName +
                     "\"," + parameterTypesString + ").invoke(null";
-            if (paramString!=null&&!paramString.isEmpty()) {
+            if (paramString != null && !paramString.isEmpty()) {
                 src += (",new Object[]{" + paramString + "});");
             } else {
                 src += ",null);";
