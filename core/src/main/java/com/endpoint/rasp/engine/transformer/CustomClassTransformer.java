@@ -22,8 +22,10 @@ import java.lang.instrument.Instrumentation;
 import java.lang.ref.SoftReference;
 import java.security.ProtectionDomain;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 自定义类字节码转换器，用于hook类的方法
@@ -36,9 +38,14 @@ public class CustomClassTransformer implements ClassFileTransformer {
     private static final String SCAN_ANNOTATION_PACKAGE = "com.endpoint.rasp.engine.hook";
     private static final HashSet<String> jspClassLoaderNames = new HashSet<>();
     public static ConcurrentHashMap<String, SoftReference<ClassLoader>> jspClassLoaderCache = new ConcurrentHashMap<String, SoftReference<ClassLoader>>();
-
+    //true 已经卸载，false已经安装
+    private final AtomicBoolean loadFlag = new AtomicBoolean(true);
     private final Instrumentation inst;
     private final HashSet<AbstractClassHook> hooks = new HashSet<AbstractClassHook>();
+
+    public AtomicBoolean getLoadFlag() {
+        return loadFlag;
+    }
 
     static {
         jspClassLoaderNames.add("org.apache.jasper.servlet.JasperLoader");
@@ -55,11 +62,17 @@ public class CustomClassTransformer implements ClassFileTransformer {
     }
 
     public void release() {
-        LOGGER.debug("custom class transformer release");
-        //移除当前的transformer。重新加载的类将不会被应用这个transformer
-        inst.removeTransformer(this);
+
+        boolean b = loadFlag.compareAndSet(false, true);
+        if (b) {
+            LogTool.info("【rasp】卸载失败，可能rasp已经执行过卸载");
+        }
+        LOGGER.debug("【rasp】开始卸载rasp");
         //再次执行
         retransformHooks();
+        //移除当前的transformer。重新加载的类将不会被应用这个transformer
+        inst.removeTransformer(this);
+
     }
 
     /**
@@ -73,7 +86,7 @@ public class CustomClassTransformer implements ClassFileTransformer {
                 //确定类是否可被修改
                 if (inst.isModifiableClass(clazz) && !clazz.getName().startsWith("java.lang.invoke.LambdaForm")) {
                     try {
-                        LOGGER.debug("retransform class name:" + clazz.getName());
+                        LOGGER.debug("【rasp】重新加载类:" + clazz.getName());
                         // hook已经加载的类，或者是回滚已经加载的类(当转换器还原到默认值，就会执行类的还原)
                         inst.retransformClasses(clazz);
                     } catch (Throwable t) {
@@ -163,9 +176,17 @@ public class CustomClassTransformer implements ClassFileTransformer {
      *
      * @see ClassFileTransformer#transform(ClassLoader, String, Class, ProtectionDomain, byte[])
      */
+
+    final Map<String, byte[]> OriginalBuffer = new ConcurrentHashMap<>(64);
+
     @Override
     public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined,
                             ProtectionDomain domain, byte[] classfileBuffer) {
+        if (loadFlag.get()) {
+            return OriginalBuffer.get(className) == null ? classfileBuffer : OriginalBuffer.get(className);
+        } else {
+            OriginalBuffer.put(className, classfileBuffer);
+        }
         if (loader != null && jspClassLoaderNames.contains(loader.getClass().getName())) {
             jspClassLoaderCache.put(className.replace("/", "."), new SoftReference<>(loader));
         }

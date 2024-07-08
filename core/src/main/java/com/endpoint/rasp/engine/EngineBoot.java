@@ -3,14 +3,16 @@ package com.endpoint.rasp.engine;
 import com.endpoint.rasp.common.AnsiLog;
 import com.endpoint.rasp.common.constant.RaspArgsConstant;
 import com.endpoint.rasp.engine.checker.CheckerManager;
+import com.endpoint.rasp.engine.common.log.LogTool;
 import com.endpoint.rasp.engine.transformer.CustomClassTransformer;
 import org.apache.log4j.PropertyConfigurator;
-import rpc.service.*;
+import rpc.service.BaseService;
+import rpc.service.RpcService;
+import rpc.service.ServiceStrategyFactory;
+import rpc.service.ZeroMQService;
 
 import java.io.File;
 import java.lang.instrument.Instrumentation;
-import java.lang.reflect.Field;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -75,15 +77,15 @@ public class EngineBoot {
      * @throws Exception
      */
     public EngineBoot(Instrumentation inst, String action) throws Exception {
-        AnsiLog.info("load agent success,EngineBoot: it`s classloader :" + EngineBoot.class.getClassLoader());
+        AnsiLog.info("【rasp】load agent success,EngineBoot: it`s classloader :" + EngineBoot.class.getClassLoader());
         this.instrumentation = inst;
         PropertyConfigurator.configure(this.getClass().getResourceAsStream("/log4j.properties"));
         if (!loadConfig()) {
             return;
         }
         if (!isBindRef.compareAndSet(false, true)) {
-            AnsiLog.warn("rasp already bind,plz check if you are rebinding");
-            throw new IllegalStateException("rasp already bind,plz check if you are rebinding");
+            AnsiLog.warn("【rasp】rasp already bind,plz check if you are rebinding");
+            throw new IllegalStateException("【rasp】rasp already bind,plz check if you are rebinding");
         }
         initTransformer();
 
@@ -110,15 +112,15 @@ public class EngineBoot {
     }
 
 
-
     public void release() {
         BaseService.getInstance().close();
         if (transformer != null) {
             transformer.release();
         }
-        INSTANCE = null;
-        //清除所有检测引擎
+        //清除所有检测引擎 其实可以不用这一步，因为后续classloader直接就清空了
         CheckerManager.release();
+        INSTANCE = null;
+
 
     }
 
@@ -153,6 +155,9 @@ public class EngineBoot {
      */
     private void initTransformer() {
         transformer = new CustomClassTransformer(instrumentation);
+        if (!transformer.getLoadFlag().compareAndSet(true, false)) {
+            LogTool.info("【rasp】rasp安装失败，或许rasp已安装");
+        }
         transformer.retransformHooks();
     }
 
