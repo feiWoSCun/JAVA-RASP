@@ -25,7 +25,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 自定义类字节码转换器，用于hook类的方法
@@ -39,11 +38,11 @@ public class CustomClassTransformer implements ClassFileTransformer {
     private static final HashSet<String> jspClassLoaderNames = new HashSet<>();
     public static ConcurrentHashMap<String, SoftReference<ClassLoader>> jspClassLoaderCache = new ConcurrentHashMap<String, SoftReference<ClassLoader>>();
     //true 已经卸载，false已经安装
-    private final AtomicBoolean loadFlag = new AtomicBoolean(true);
+    private volatile boolean loadFlag = true;
     private final Instrumentation inst;
     private final HashSet<AbstractClassHook> hooks = new HashSet<AbstractClassHook>();
 
-    public AtomicBoolean getLoadFlag() {
+    public boolean getLoadFlag() {
         return loadFlag;
     }
 
@@ -57,17 +56,18 @@ public class CustomClassTransformer implements ClassFileTransformer {
 
     public CustomClassTransformer(Instrumentation inst) {
         this.inst = inst;
+        loadFlag = true;
         inst.addTransformer(this, true);
         addAnnotationHook();
     }
 
     public void release() {
 
-        boolean b = loadFlag.compareAndSet(false, true);
-        if (b) {
+        if (!loadFlag) {
             LogTool.info("【rasp】卸载失败，可能rasp已经执行过卸载");
         }
         LOGGER.debug("【rasp】开始卸载rasp");
+        loadFlag = false;
         //再次执行
         retransformHooks();
         //移除当前的transformer。重新加载的类将不会被应用这个transformer
@@ -178,15 +178,17 @@ public class CustomClassTransformer implements ClassFileTransformer {
      */
 
     final Map<String, byte[]> OriginalBuffer = new ConcurrentHashMap<>(64);
+    byte[] last;
 
     @Override
     public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined,
                             ProtectionDomain domain, byte[] classfileBuffer) {
-        if (loadFlag.get()) {
-            return OriginalBuffer.get(className) == null ? classfileBuffer : OriginalBuffer.get(className);
-        } else {
-            OriginalBuffer.put(className, classfileBuffer);
+
+        if (!loadFlag) {
+            LogTool.info(loader + "," + className);
+            return OriginalBuffer.getOrDefault(className, classfileBuffer);
         }
+        last = classfileBuffer;
         if (loader != null && jspClassLoaderNames.contains(loader.getClass().getName())) {
             jspClassLoaderCache.put(className.replace("/", "."), new SoftReference<>(loader));
         }
@@ -195,6 +197,7 @@ public class CustomClassTransformer implements ClassFileTransformer {
         }
         for (final AbstractClassHook hook : hooks) {
             if (hook.isClassMatched(className)) {
+                OriginalBuffer.put(className, classfileBuffer);
                 //TODO 是否泄露原理
                 LogTool.info("hook class name：" + className);
                 //TODO 需关闭

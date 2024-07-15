@@ -16,8 +16,8 @@ public enum ErrorType {
     REGISTER_ERROR(20008, "E-RASP Engine Connect RPC Failed"),
     HEARTBEAT_ERROR(20009, "E-RASP Engine Send HeartBeat Failed"),
     UPLOAD_LOG_ERROR(20011, "E-RASP Engine Warning Log Upload Failed"),
-    UPGRADE_ERROR(30002, "E-RASP Engine Upgrade Error");
-
+    UPGRADE_ERROR(30002, "E-RASP Engine Upgrade Error"),
+    MQ_CLOSE_ERROR(200012, "zeromq close Error");
     private int code;
     private String message;
 

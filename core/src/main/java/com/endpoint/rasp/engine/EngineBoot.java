@@ -155,7 +155,7 @@ public class EngineBoot {
      */
     private void initTransformer() {
         transformer = new CustomClassTransformer(instrumentation);
-        if (!transformer.getLoadFlag().compareAndSet(true, false)) {
+        if (!transformer.getLoadFlag()) {
             LogTool.info("【rasp】rasp安装失败，或许rasp已安装");
         }
         transformer.retransformHooks();
