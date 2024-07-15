@@ -6,6 +6,7 @@ import com.endpoint.rasp.engine.checker.CheckerManager;
 import com.endpoint.rasp.engine.common.log.LogTool;
 import com.endpoint.rasp.engine.transformer.CustomClassTransformer;
 import org.apache.log4j.PropertyConfigurator;
+import rpc.job.ThreadPool;
 import rpc.service.BaseService;
 import rpc.service.RpcService;
 import rpc.service.ServiceStrategyFactory;

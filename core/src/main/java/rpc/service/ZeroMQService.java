@@ -7,10 +7,10 @@ import com.google.gson.Gson;
 import org.zeromq.SocketType;
 import org.zeromq.ZMQ;
 import org.zeromq.ZMQException;
-import rpc.enums.MqEnum;
 import rpc.bean.RPCMemShellEventLog;
 import rpc.bean.RaspConfig;
 import rpc.bean.RaspInfo;
+import rpc.enums.MqEnum;
 import rpc.enums.ServiceTypeEnum;
 import rpc.job.SendRaspEventLogJob;
 import rpc.job.ThreadPool;
@@ -51,6 +51,7 @@ public class ZeroMQService extends BaseService implements ServiceStrategyHandler
 
     @Override
     public void close() {
+        ThreadPool.shutdownAndAwaitTermination();
         try {
             if (socket != null) {
                 this.socket.close();
@@ -62,6 +63,8 @@ public class ZeroMQService extends BaseService implements ServiceStrategyHandler
             LogTool.error(ErrorType.MQ_CLOSE_ERROR,
                     "【zeromq】mq close error");
         }
+        //关闭线程池
+
     }
 
 

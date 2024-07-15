@@ -38,6 +38,7 @@ public class ThreadPool {
         private GlobalUncaughtExceptionHandler() {
         }
 
+        @Override
         public void uncaughtException(Thread t, Throwable e) {
             LogTool.error(ErrorType.RUNTIME_ERROR, "Exception in thread " + t.getName(), e);
         }
@@ -63,7 +64,7 @@ public class ThreadPool {
         }));
     }
 
-    private static void shutdownAndAwaitTermination() {
+    public static void shutdownAndAwaitTermination() {
         ((ExecutorService) ThreadPool.threadPoolExecutor).shutdown(); // Disable new tasks from being submitted
         try {
             // Wait a while for existing tasks to terminate
