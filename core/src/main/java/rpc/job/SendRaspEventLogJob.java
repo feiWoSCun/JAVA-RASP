@@ -1,5 +1,6 @@
 package rpc.job;
 
+import com.endpoint.rasp.engine.common.log.ErrorType;
 import com.endpoint.rasp.engine.common.log.LogTool;
 import org.apache.log4j.Logger;
 import rpc.bean.RPCMemShellEventLog;
@@ -35,7 +36,7 @@ public class SendRaspEventLogJob implements Runnable {
     @Override
     public void run() {
         BaseService baseService = BaseService.getInstance();
-        while (!Thread.currentThread().isInterrupted()) {
+        while (!Thread.interrupted()) {
             try {
                 if (baseService.getRpcChannelHash() != null) {
                     int n;
@@ -48,7 +49,9 @@ public class SendRaspEventLogJob implements Runnable {
                 }
                 TimeUnit.SECONDS.sleep(5);
             } catch (InterruptedException e) {
-                throw new RuntimeException(e);
+                LogTool.error(ErrorType.UPLOAD_LOG_ERROR, "线程打断,可能是因为触发卸载", e);
+
+                break;
             }
         }
     }

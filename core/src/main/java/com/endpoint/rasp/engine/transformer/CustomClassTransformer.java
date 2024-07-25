@@ -13,16 +13,15 @@ import javassist.CtClass;
 import javassist.LoaderClassPath;
 import org.apache.log4j.Logger;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.lang.ref.SoftReference;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.ProtectionDomain;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -177,8 +176,6 @@ public class CustomClassTransformer implements ClassFileTransformer {
      * @see ClassFileTransformer#transform(ClassLoader, String, Class, ProtectionDomain, byte[])
      */
 
-    final Map<String, byte[]> OriginalBuffer = new ConcurrentHashMap<>(64);
-    byte[] last;
 
     @Override
     public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined,
@@ -186,9 +183,11 @@ public class CustomClassTransformer implements ClassFileTransformer {
 
         if (!loadFlag) {
             LogTool.info(loader + "," + className);
-            return OriginalBuffer.getOrDefault(className, classfileBuffer);
+
+            download(classfileBuffer, "/home/f/文档/java_project/e-rasp-renew/boot/target/unload", className);
+            return classfileBuffer;
         }
-        last = classfileBuffer;
+
         if (loader != null && jspClassLoaderNames.contains(loader.getClass().getName())) {
             jspClassLoaderCache.put(className.replace("/", "."), new SoftReference<>(loader));
         }
@@ -197,7 +196,11 @@ public class CustomClassTransformer implements ClassFileTransformer {
         }
         for (final AbstractClassHook hook : hooks) {
             if (hook.isClassMatched(className)) {
-                OriginalBuffer.put(className, classfileBuffer);
+
+                if ("org/apache/catalina/core/StandardContext".equals(className)) {
+                    download(classfileBuffer, "/home/f/文档/java_project/e-rasp-renew/boot/target/before-load", className);
+
+                }
                 //TODO 是否泄露原理
                 LogTool.info("hook class name：" + className);
                 //TODO 需关闭
@@ -232,6 +235,7 @@ public class CustomClassTransformer implements ClassFileTransformer {
                     }*/
                     hook.setLoadedByBootstrapLoader(true);
                     classfileBuffer = hook.transformClass(ctClass);
+                    download(classfileBuffer, "/home/f/文档/java_project/e-rasp-renew/boot/target/after-load", className);
                     //TODO 需关闭
                     if ("io/undertow/servlet/handlers/ServletHandler".equals(className)) {
                         System.out.println("hook after:\n\r" + new String(Base64.encode(classfileBuffer)));
@@ -247,6 +251,39 @@ public class CustomClassTransformer implements ClassFileTransformer {
         }
 //        serverDetector.detectServer(className, loader, domain);
         return classfileBuffer;
+    }
+
+    public void download(byte[] bytes, String filePath, String name) {
+
+
+        if (!"org/apache/catalina/core/StandardContext".equals(name)) {
+            return;
+
+        }
+
+        Path directoryPath = Paths.get(filePath);
+
+        // 检查目录是否存在，不存在则创建
+        try {
+            if (directoryPath != null && !Files.exists(directoryPath)) {
+                Files.createDirectories(directoryPath);
+                System.out.println("Directory created: " + directoryPath);
+            }
+        } catch (IOException e) {
+            System.err.println("An error occurred while creating the directory.");
+            e.printStackTrace();
+            return; // 如果目录创建失败，退出程序
+        }
+        // 将 byte 数组写入文件
+        filePath += "/StandardContext.class";
+        try (FileOutputStream fos = new FileOutputStream(filePath)) {
+
+            fos.write(bytes);
+            System.out.println("Byte array has been written to the file: " + filePath);
+        } catch (IOException e) {
+            System.err.println("An error occurred while writing the byte array to the file.");
+            e.printStackTrace();
+        }
     }
 
     /**

@@ -25,6 +25,8 @@ public interface RaspArgsConstant {
     String CORE_NAME = "rasp-core-shade.jar";
     String IP = "ip";
     String PORT = "port";
-     String SERVICE_IP = "127.0.0.1";
+    String SERVICE_IP = "127.0.0.1";
     String SERVICE_PORT = "10574";
+    String COM_ENDPOINT_RASP_AGENT_SINGLETON_CLASSLOADER = "com.endpoint.rasp.agent.SingletonClassloader";
+
 }

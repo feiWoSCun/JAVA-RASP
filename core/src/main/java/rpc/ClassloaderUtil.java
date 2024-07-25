@@ -5,6 +5,8 @@ import rpc.service.ServiceStrategyHandler;
 import java.lang.reflect.Field;
 import java.util.List;
 
+import static com.endpoint.rasp.common.constant.RaspArgsConstant.COM_ENDPOINT_RASP_AGENT_SINGLETON_CLASSLOADER;
+
 /**
  * @author: feiwoscun
  * @date: 2024/7/5
@@ -12,9 +14,11 @@ import java.util.List;
  * @description:
  */
 public class ClassloaderUtil {
+
+
     public static ClassLoader getRaspClassLoader() {
         try {
-            Class<?> aClass = ClassLoader.getSystemClassLoader().loadClass("com.endpoint.rasp.agent.AgentBootstrap");
+            Class<?> aClass = ClassLoader.getSystemClassLoader().loadClass(COM_ENDPOINT_RASP_AGENT_SINGLETON_CLASSLOADER);
             Field raspClassLoader = aClass.getDeclaredField("raspClassLoader");
 
             return (ClassLoader) (raspClassLoader.get(null));

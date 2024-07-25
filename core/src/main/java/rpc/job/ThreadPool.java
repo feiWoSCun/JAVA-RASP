@@ -58,10 +58,10 @@ public class ThreadPool {
         executor.setThreadFactory(new ThreadFactoryAutoLogError(Executors.defaultThreadFactory()));
         threadPoolExecutor = executor;
         // 注册关闭钩子
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+/*        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             LogTool.info("Shutdown hook triggered.");
             shutdownAndAwaitTermination();
-        }));
+        }));*/
     }
 
     public static void shutdownAndAwaitTermination() {
@@ -71,8 +71,9 @@ public class ThreadPool {
             if (!((ExecutorService) ThreadPool.threadPoolExecutor).awaitTermination(1, TimeUnit.SECONDS)) {
                 ((ExecutorService) ThreadPool.threadPoolExecutor).shutdownNow(); // Cancel currently executing tasks
                 // Wait a while for tasks to respond to being cancelled
-                if (!((ExecutorService) ThreadPool.threadPoolExecutor).awaitTermination(1, TimeUnit.SECONDS))
+                if (!((ExecutorService) ThreadPool.threadPoolExecutor).awaitTermination(1, TimeUnit.SECONDS)) {
                     LogTool.info("Pool did not terminate");
+                }
             }
         } catch (InterruptedException ie) {
             // (Re-)Cancel if current thread also interrupted

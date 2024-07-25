@@ -53,6 +53,7 @@ public class ZeroMQService extends BaseService implements ServiceStrategyHandler
     public void close() {
         ThreadPool.shutdownAndAwaitTermination();
         try {
+            //todo 如果执行rasp uninstall 并且此时 socket没有连接上的话，会一直阻塞在这儿，有空看一下有没有解决方案
             if (socket != null) {
                 this.socket.close();
             }

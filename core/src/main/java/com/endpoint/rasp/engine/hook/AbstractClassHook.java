@@ -313,7 +313,7 @@ public abstract class AbstractClassHook {
             } else {
                 src += ",null);";
             }
-            src = "try {System.out.print(1);" + src + "} catch (Throwable t) {if(t.getCause() != null && t.getCause().getClass()" +
+            src = "try {System.out.print(88888888);" + src + "} catch (Throwable t) {if(t.getCause() != null && t.getCause().getClass()" +
                     ".getName().equals(\"com.endpoint.rasp.engine.common.exception.SecurityException\")){throw t;}}";
         } else {
             src = invokeClassName + '.' + methodName + "(" + paramString + ");";

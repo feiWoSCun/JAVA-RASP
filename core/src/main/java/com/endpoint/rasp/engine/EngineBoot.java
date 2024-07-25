@@ -24,7 +24,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @description:
  */
 public class EngineBoot {
-    public static ClassLoader classLoader;
     private CustomClassTransformer transformer;
     private final Instrumentation instrumentation;
     /**
@@ -43,9 +42,8 @@ public class EngineBoot {
      * @return 单例
      * @throws Exception
      */
-    public static synchronized EngineBoot getInstance(Instrumentation inst, Map<String, String> args, ClassLoader classLoader) throws Exception {
+    public static synchronized EngineBoot getInstance(Instrumentation inst, Map<String, String> args ) throws Exception {
         EngineBoot.args = args;
-        EngineBoot.classLoader = classLoader;
         //用户连续多次卸载
         String action = args.get(RaspArgsConstant._ACTION);
 
@@ -120,6 +118,7 @@ public class EngineBoot {
         }
         //清除所有检测引擎 其实可以不用这一步，因为后续classloader直接就清空了
         CheckerManager.release();
+        //help gc
         INSTANCE = null;
 
 

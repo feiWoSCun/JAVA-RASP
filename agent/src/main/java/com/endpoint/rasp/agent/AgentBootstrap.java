@@ -7,7 +7,7 @@ import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.instrument.Instrumentation;
-import java.net.URL;
+import java.net.URLClassLoader;
 import java.net.URLDecoder;
 import java.security.CodeSource;
 import java.util.HashMap;
@@ -24,7 +24,6 @@ import java.util.jar.JarFile;
 public class AgentBootstrap {
     private static final String LOGS_RASP_AGENT_LOG = "logs/rasp-agent.log";
     private static PrintStream ps = System.err;
-    public static volatile ClassLoader raspClassLoader;
     private static Map<String, String> useArgs;
 
 
@@ -101,7 +100,7 @@ public class AgentBootstrap {
                 return;
             }
 
-            final ClassLoader agentLoader = getClassLoader(inst, raspCoreJarFile);
+            SingletonClassloader.getRaspClassLoader(inst, raspCoreJarFile);
             inst.appendToBootstrapClassLoaderSearch(new JarFile(useArgs.get(RaspArgsConstant._HOME) + RaspArgsConstant.RASP_CORE_SHADE_JAR));
             inst.appendToBootstrapClassLoaderSearch(new JarFile(useArgs.get(RaspArgsConstant._HOME) + RaspArgsConstant.AGENT_JAR));
             Thread bindingThread = new Thread(() -> {
@@ -125,19 +124,52 @@ public class AgentBootstrap {
                 // ignore
             }
             throw new RuntimeException(t);
+        } finally {
+            ///clear gc root ,
         }
     }
 
-    private static ClassLoader getClassLoader(Instrumentation inst, File raspCoreJarFile) throws Throwable {
-        // 构造自定义的类加载器，尽量减少rasp对现有工程的侵蚀
-        return loadOrDefineClassLoader(raspCoreJarFile);
-    }
-
-    private static ClassLoader loadOrDefineClassLoader(File raspCoreJarFile) throws Throwable {
-        if (raspClassLoader == null) {
-            raspClassLoader = new RaspClassloader(new URL[]{raspCoreJarFile.toURI().toURL()});
+    private static void bind(Instrumentation inst, Map<String, String> useArgs) throws Throwable {
+        /**
+         * <pre>
+         * raspBootstrap bootstrap = raspBootstrap.getInstance(inst);
+         * todo bind在执行完之后会不会退出  uninstall之后会不会
+         * </pre>
+         */
+        File home = new File(useArgs.get(RaspArgsConstant._HOME));
+        //解决log4j  在不同线程初始化的问题
+        initLogPath(home, useArgs.get(RaspArgsConstant._PID));
+        ClassLoader raspClassLoader = SingletonClassloader.raspClassLoader;
+        ps.println("change Thread.currentThread.ContextClassLoader ,use RaspClassLoader");
+        ///Thread.currentThread().setContextClassLoader(raspClassLoader);
+        Class<?> bootstrapClass = raspClassLoader.loadClass(RaspArgsConstant.RASP_BOOTSTRAP);
+        String action = useArgs.get(RaspArgsConstant._ACTION);
+        Object bootstrap = bootstrapClass.getMethod(RaspArgsConstant.GET_INSTANCE, Instrumentation.class, Map.class)
+                .invoke(null, inst, useArgs);
+        if (RaspArgsConstant.INSTALL.equals(action)) {
+            boolean isBind = (Boolean) bootstrapClass.getMethod(RaspArgsConstant.IS_BIND).invoke(bootstrap);
+            if (!isBind) {
+                String errorMsg = "rasp server port binding failed! Please check $HOME/logs/rasp/rasp-agent.log for more details." + " AgentBootStrap#bind";
+                ps.println(errorMsg);
+                throw new RuntimeException(errorMsg);
+            }
+            ps.println("rasp server already bind. AgentBootStrap#bind");
+        } else if (RaspArgsConstant.UNINSTALL.equals(action)) {
+            if (bootstrap != null) {
+                String errorMsg = "rasp server unload failed! Please check logs/rasp/rasp-pid.log for more details." + " AgentBootStrap#bind";
+                ps.println(errorMsg);
+                throw new RuntimeException(errorMsg);
+            }
+            //help gc
+            ((URLClassLoader) SingletonClassloader.raspClassLoader).close();
+            SingletonClassloader.raspClassLoader = null;
+            System.gc();
+            ps.println("rasp server already unload. AgentBootStrap#bind");
+        } else {
+            throw new RuntimeException("unknown action: " + action);
         }
-        return raspClassLoader;
+        //
+        //Thread.currentThread().setContextClassLoader(contextClassLoader);
     }
 
     private static Map<String, String> parseArgs(String args) {
@@ -169,44 +201,6 @@ public class AgentBootstrap {
 
     private static void initLogPath(File home, String pid) {
         System.setProperty("log-path", home + File.separator + "logs" + File.separator + "rasp" + pid + ".log");
-
-    }
-
-    private static void bind(Instrumentation inst, Map<String, String> useArgs) throws Throwable {
-        /**
-         * <pre>
-         * raspBootstrap bootstrap = raspBootstrap.getInstance(inst);
-         * </pre>
-         */
-        File home = new File(useArgs.get(RaspArgsConstant._HOME));
-        initLogPath(home, useArgs.get(RaspArgsConstant._PID));
-        //解决log4j  在不同线程初始化的问题
-        ps.println("change Thread.currentThread.ContextClassLoader ,use RaspClassLoader");
-        Thread.currentThread().setContextClassLoader(raspClassLoader);
-        Class<?> bootstrapClass = raspClassLoader.loadClass(RaspArgsConstant.RASP_BOOTSTRAP);
-        String action = useArgs.get(RaspArgsConstant._ACTION);
-        Object bootstrap = bootstrapClass.getMethod(RaspArgsConstant.GET_INSTANCE, Instrumentation.class, Map.class, ClassLoader.class)
-                .invoke(null, inst, useArgs, raspClassLoader);
-        if (RaspArgsConstant.INSTALL.equals(action)) {
-            boolean isBind = (Boolean) bootstrapClass.getMethod(RaspArgsConstant.IS_BIND).invoke(bootstrap);
-            if (!isBind) {
-                String errorMsg = "rasp server port binding failed! Please check $HOME/logs/rasp/rasp-agent.log for more details." + " AgentBootStrap#bind";
-                ps.println(errorMsg);
-                throw new RuntimeException(errorMsg);
-            }
-            ps.println("rasp server already bind. AgentBootStrap#bind");
-        } else if (RaspArgsConstant.UNINSTALL.equals(action)) {
-            if (bootstrap != null) {
-                raspClassLoader = null;
-                String errorMsg = "rasp server unload failed! Please check logs/rasp/rasp-pid.log for more details." + " AgentBootStrap#bind";
-                ps.println(errorMsg);
-                throw new RuntimeException(errorMsg);
-            }
-            raspClassLoader = null;
-            ps.println("rasp server already unload. AgentBootStrap#bind");
-        } else {
-            throw new RuntimeException("unknown action: " + action);
-        }
 
     }
 
