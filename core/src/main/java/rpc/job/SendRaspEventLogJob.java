@@ -1,7 +1,8 @@
 package rpc.job;
 
-import com.endpoint.rasp.engine.common.log.ErrorType;
-import com.endpoint.rasp.engine.common.log.LogTool;
+
+import com.endpoint.rasp.common.ErrorType;
+import com.endpoint.rasp.common.LogTool;
 import org.apache.log4j.Logger;
 import rpc.bean.RPCMemShellEventLog;
 import rpc.service.BaseService;
@@ -20,16 +21,16 @@ public class SendRaspEventLogJob implements Runnable {
     /**
      * 最多缓存1000条日志
      */
-    private static final LinkedBlockingQueue<RPCMemShellEventLog> queue = new LinkedBlockingQueue<>(1000);
+    private static final LinkedBlockingQueue<RPCMemShellEventLog> QUEUE = new LinkedBlockingQueue<>(1000);
 
     /**
      * 添加事件日志
      * @param log
      */
     public static synchronized void addLog(RPCMemShellEventLog log) {
-        if (!queue.offer(log)) {
-            queue.remove();
-            queue.offer(log);
+        if (!QUEUE.offer(log)) {
+            QUEUE.remove();
+            QUEUE.offer(log);
         }
     }
 
@@ -40,9 +41,9 @@ public class SendRaspEventLogJob implements Runnable {
             try {
                 if (baseService.getRpcChannelHash() != null) {
                     int n;
-                    if ((n = queue.size()) > 0) {
+                    if ((n = QUEUE.size()) > 0) {
                         for (int i = 0; i < n; i++) {
-                            RPCMemShellEventLog log = queue.poll();
+                            RPCMemShellEventLog log = QUEUE.poll();
                             baseService.sendRaspEventLog(log);
                         }
                     }
@@ -50,7 +51,6 @@ public class SendRaspEventLogJob implements Runnable {
                 TimeUnit.SECONDS.sleep(5);
             } catch (InterruptedException e) {
                 LogTool.error(ErrorType.UPLOAD_LOG_ERROR, "线程打断,可能是因为触发卸载", e);
-
                 break;
             }
         }

@@ -1,10 +1,10 @@
 package com.endpoint.rasp.engine.transformer;
 
+import com.endpoint.rasp.common.ErrorType;
+import com.endpoint.rasp.common.LogTool;
+import com.endpoint.rasp.common.annotation.AnnotationScanner;
+import com.endpoint.rasp.common.annotation.HookAnnotation;
 import com.endpoint.rasp.engine.EngineBoot;
-import com.endpoint.rasp.engine.common.annotation.AnnotationScanner;
-import com.endpoint.rasp.engine.common.annotation.HookAnnotation;
-import com.endpoint.rasp.engine.common.log.ErrorType;
-import com.endpoint.rasp.engine.common.log.LogTool;
 import com.endpoint.rasp.engine.hook.AbstractClassHook;
 import com.sun.org.apache.xerces.internal.impl.dv.util.Base64;
 import javassist.ClassClassPath;

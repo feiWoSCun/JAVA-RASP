@@ -8,7 +8,7 @@ import com.endpoint.rasp.engine.checker.CheckerManager;
 import com.endpoint.rasp.engine.common.constant.MemoryShellConstant;
 import com.endpoint.rasp.engine.common.constant.RaspEngineConstant;
 import com.endpoint.rasp.engine.common.log.ErrorType;
-import com.endpoint.rasp.engine.common.log.LogTool;
+import com.endpoint.rasp.common.LogTool;
 import rpc.bean.RPCMemShellEventLog;
 import rpc.bean.RaspConfig;
 import rpc.enums.ServiceTypeEnum;

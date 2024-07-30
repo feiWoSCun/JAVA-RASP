@@ -1,7 +1,6 @@
 package com.endpoint.rasp.engine.hook;
-
-import com.endpoint.rasp.engine.common.log.ErrorType;
-import com.endpoint.rasp.engine.common.log.LogTool;
+import com.endpoint.rasp.common.ErrorType;
+import com.endpoint.rasp.common.LogTool;
 import javassist.*;
 import org.apache.log4j.Logger;
 

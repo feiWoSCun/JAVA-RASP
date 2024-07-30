@@ -1,12 +1,10 @@
 package com.endpoint.rasp.engine;
 
 import com.endpoint.rasp.common.AnsiLog;
+import com.endpoint.rasp.common.LogTool;
 import com.endpoint.rasp.common.constant.RaspArgsConstant;
-import com.endpoint.rasp.engine.checker.CheckerManager;
-import com.endpoint.rasp.engine.common.log.LogTool;
 import com.endpoint.rasp.engine.transformer.CustomClassTransformer;
 import org.apache.log4j.PropertyConfigurator;
-import rpc.job.ThreadPool;
 import rpc.service.BaseService;
 import rpc.service.RpcService;
 import rpc.service.ServiceStrategyFactory;
@@ -116,8 +114,6 @@ public class EngineBoot {
         if (transformer != null) {
             transformer.release();
         }
-        //清除所有检测引擎 其实可以不用这一步，因为后续classloader直接就清空了
-        CheckerManager.release();
         //help gc
         INSTANCE = null;
 

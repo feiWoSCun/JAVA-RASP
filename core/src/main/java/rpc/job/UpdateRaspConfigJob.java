@@ -1,7 +1,7 @@
 package rpc.job;
 
 import com.endpoint.rasp.engine.common.log.ErrorType;
-import com.endpoint.rasp.engine.common.log.LogTool;
+import com.endpoint.rasp.common.LogTool;
 import rpc.service.BaseService;
 
 import java.util.concurrent.TimeUnit;

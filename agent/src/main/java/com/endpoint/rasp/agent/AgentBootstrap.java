@@ -137,11 +137,11 @@ public class AgentBootstrap {
          * </pre>
          */
         File home = new File(useArgs.get(RaspArgsConstant._HOME));
-        //解决log4j  在不同线程初始化的问题
         initLogPath(home, useArgs.get(RaspArgsConstant._PID));
         ClassLoader raspClassLoader = SingletonClassloader.raspClassLoader;
         ps.println("change Thread.currentThread.ContextClassLoader ,use RaspClassLoader");
-        ///Thread.currentThread().setContextClassLoader(raspClassLoader);
+        //解决log4j  在不同线程初始化的问题
+        Thread.currentThread().setContextClassLoader(raspClassLoader);
         Class<?> bootstrapClass = raspClassLoader.loadClass(RaspArgsConstant.RASP_BOOTSTRAP);
         String action = useArgs.get(RaspArgsConstant._ACTION);
         Object bootstrap = bootstrapClass.getMethod(RaspArgsConstant.GET_INSTANCE, Instrumentation.class, Map.class)
@@ -168,15 +168,13 @@ public class AgentBootstrap {
         } else {
             throw new RuntimeException("unknown action: " + action);
         }
-        //
-        //Thread.currentThread().setContextClassLoader(contextClassLoader);
+        Thread.currentThread().setContextClassLoader(ClassLoader.getSystemClassLoader());
     }
 
     private static Map<String, String> parseArgs(String args) {
 
         final Map<String, String> map = new HashMap<>(4);
         final String[] split = args.split(";");
-
 
         for (int i = 0; i < split.length; ) {
             final int finalI = i;

@@ -2,7 +2,7 @@ package rpc.service;
 
 import com.endpoint.rasp.engine.EngineBoot;
 import com.endpoint.rasp.engine.common.log.ErrorType;
-import com.endpoint.rasp.engine.common.log.LogTool;
+import com.endpoint.rasp.common.LogTool;
 import com.google.gson.Gson;
 import rpc.ErrorCode;
 import rpc.LoginSingle;
@@ -17,7 +17,6 @@ import rpc.job.UpdateRaspConfigJob;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;

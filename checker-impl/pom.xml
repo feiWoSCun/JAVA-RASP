@@ -6,17 +6,18 @@
         <artifactId>e-rasp-renew</artifactId>
         <version>fei-1.0</version>
     </parent>
-    <artifactId>common</artifactId>
-    <name>common</name>
-    <packaging>jar</packaging>
+    <artifactId>checker-impl</artifactId>
+    <packaging>war</packaging>
+    <name>checker-impl Maven Webapp</name>
+    <url>http://maven.apache.org</url>
     <dependencies>
         <dependency>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-            <version>1.2.17</version>
+            <groupId>com.endpoint.rasp</groupId>
+            <artifactId>checker-spi</artifactId>
+            <version>fei-1.0</version>
         </dependency>
     </dependencies>
     <build>
-        <finalName>common</finalName>
+        <finalName>checker-impl</finalName>
     </build>
 </project>

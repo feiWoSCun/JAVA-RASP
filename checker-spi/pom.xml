@@ -6,17 +6,11 @@
         <artifactId>e-rasp-renew</artifactId>
         <version>fei-1.0</version>
     </parent>
-    <artifactId>common</artifactId>
-    <name>common</name>
+    <artifactId>checker-spi</artifactId>
     <packaging>jar</packaging>
     <dependencies>
-        <dependency>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-            <version>1.2.17</version>
-        </dependency>
     </dependencies>
     <build>
-        <finalName>common</finalName>
+        <finalName>checker</finalName>
     </build>
 </project>

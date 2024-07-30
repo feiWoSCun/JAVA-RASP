@@ -2,7 +2,7 @@ package rpc.service;
 
 import com.endpoint.rasp.engine.EngineBoot;
 import com.endpoint.rasp.engine.common.log.ErrorType;
-import com.endpoint.rasp.engine.common.log.LogTool;
+import com.endpoint.rasp.common.LogTool;
 import com.google.gson.Gson;
 import org.zeromq.SocketType;
 import org.zeromq.ZMQ;
@@ -13,7 +13,7 @@ import rpc.bean.RaspInfo;
 import rpc.enums.MqEnum;
 import rpc.enums.ServiceTypeEnum;
 import rpc.job.SendRaspEventLogJob;
-import rpc.job.ThreadPool;
+import com.endpoint.rasp.common.ThreadPool;
 import rpc.job.UpdateRaspConfigJob;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -53,10 +53,14 @@ public class ZeroMQService extends BaseService implements ServiceStrategyHandler
     public void close() {
         ThreadPool.shutdownAndAwaitTermination();
         try {
+            if (!flag.get()) {
+                throw new RuntimeException("zero mq service closed fail ,Maybe zeromq isn't connected yet ");
+            }
             //todo 如果执行rasp uninstall 并且此时 socket没有连接上的话，会一直阻塞在这儿，有空看一下有没有解决方案
             if (socket != null) {
                 this.socket.close();
             }
+            //当没有socket连接上的时候，会block
             if (context != null) {
                 this.context.term();
             }
@@ -93,20 +97,25 @@ public class ZeroMQService extends BaseService implements ServiceStrategyHandler
     @Override
     public void login() {
         context = ZMQ.context(1);
-        if (context != null && !context.isClosed()) {
-            LogTool.info("【zerpmq】: Trying to connect to server... IP: " + ip + ", Port: " + port);
+        if (!context.isClosed()) {
+            LogTool.info("【zeromq】: Trying to connect to server... IP: " + ip + ", Port: " + port);
             try {
                 socket = context.socket(SocketType.REQ);
                 if (socket != null) {
                     boolean connect = socket.connect("tcp://" + ip + ":" + port);
-                    if (connect) {
+                    if (connect && flag.compareAndSet(false, true)) {
                         socket.setReconnectIVL(RECONNECT_IVL);
                         socket.setReconnectIVLMax(RECONNECT_IVL_MAX);
                         LogTool.info("【zeromq】 Successfully connected to ZeroMQService server.");
                     } else {
-                        LogTool.error(ErrorType.REGISTER_ERROR, "【zeromq】 Failed to connect to ZeroMQService server, IP=" + ip + ", Port=" + port);
+                        context.close();
+                        String msg = "【zeromq】 Failed to connect to ZeroMQService server, IP=" + ip + ", Port=" + port;
+                        LogTool.error(ErrorType.REGISTER_ERROR, msg);
+                        throw new RuntimeException(msg);
                     }
+
                 }
+
             } catch (ZMQException e) {
                 LogTool.error(ErrorType.REGISTER_ERROR, "【zeromq】 Exception while connecting to ZeroMQService server, IP=" + ip + ", Port=" + port, e);
             }
