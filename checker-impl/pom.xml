@@ -8,8 +8,6 @@
     </parent>
     <artifactId>checker-impl</artifactId>
     <packaging>war</packaging>
-    <name>checker-impl Maven Webapp</name>
-    <url>http://maven.apache.org</url>
     <dependencies>
         <dependency>
             <groupId>com.endpoint.rasp</groupId>

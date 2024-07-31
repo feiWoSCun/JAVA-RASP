@@ -1,5 +1,7 @@
 package com.endpoint.rasp.checker;
 
+import javax.script.ScriptEngine;
+
 /**
  * @author: feiwoscun
  * @date: 2024/7/30
@@ -16,5 +18,6 @@ public interface CheckChain {
      */
     boolean doCheckChain();
 
+    ScriptEngine getEngine();
 
 }

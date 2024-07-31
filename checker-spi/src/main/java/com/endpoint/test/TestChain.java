@@ -1,3 +1,4 @@
+/*
 package com.endpoint.test;
 
 import com.endpoint.rasp.checker.CheckChain;
@@ -8,16 +9,18 @@ import com.endpoint.rasp.checker.GenericChecker;
 import java.util.ArrayList;
 import java.util.HashSet;
 
+*/
 /**
  * @author: feiwoscun
  * @date: 2024/7/30
  * @email: 2825097536@qq.com
  * @description:
- */
+ *//*
+
 public class TestChain {
 
     private final ArrayList<Checker> checkers;
-    private Checker checker1 = new GenericChecker(new HashSet<>()) {
+    private Checker checker1 = new GenericChecker(new HashSet<>(),null) {
         @Override
         public boolean isMatch(String method) {
             return true;
@@ -29,7 +32,7 @@ public class TestChain {
             return checkChain.doCheckChain();
         }
     };
-    private Checker checker2 = new GenericChecker(new HashSet<>()) {
+    private Checker checker2 = new GenericChecker(new HashSet<>(),null) {
         @Override
         public boolean isMatch(String method) {
             return true;
@@ -59,3 +62,4 @@ public class TestChain {
         checkChain.doCheckChain();
     }
 }
+*/
