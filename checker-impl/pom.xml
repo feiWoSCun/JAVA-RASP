@@ -7,7 +7,7 @@
         <version>fei-1.0</version>
     </parent>
     <artifactId>checker-impl</artifactId>
-    <packaging>war</packaging>
+    <packaging>jar</packaging>
     <dependencies>
         <dependency>
             <groupId>com.endpoint.rasp</groupId>

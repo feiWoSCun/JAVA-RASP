@@ -42,6 +42,6 @@ public interface Checker {
         return isMatch(method) && apply && defaultReturn(checkChain);
     }
 
-    String getMethods();
+    String getMethod();
 
 }

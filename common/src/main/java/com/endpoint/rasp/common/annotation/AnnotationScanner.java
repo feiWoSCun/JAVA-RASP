@@ -2,7 +2,7 @@ package com.endpoint.rasp.common.annotation;
 
 import com.endpoint.rasp.common.ErrorType;
 import com.endpoint.rasp.common.LogTool;
-import com.endpoint.rasp.common.exception.AnnotationScannerException;
+import com.endpoint.rasp.common.exception.HookMethodException;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -60,7 +60,7 @@ public class AnnotationScanner {
             }
         } catch (Exception e) {
             LogTool.warn(ErrorType.HOOK_ERROR, "find and add class failed: " + e.getMessage(), e);
-            throw new AnnotationScannerException(e);
+            throw new HookMethodException(e);
         }
         for (Class clazz : classes) {
             if (clazz.getAnnotation(annotationClass) != null) {
@@ -93,7 +93,7 @@ public class AnnotationScanner {
                         classes.add(AnnotationScanner.class.getClassLoader().loadClass(packageName + '.' + className));
                     } catch (Exception e) {
                         LogTool.warn(ErrorType.HOOK_ERROR, "find and add class failed: " + e.getMessage(), e);
-                        throw new AnnotationScannerException(e);
+                        throw new HookMethodException(e);
 
                     }
                 }

@@ -1,7 +1,7 @@
 package rpc.service;
 
+import com.endpoint.rasp.common.ErrorType;
 import com.endpoint.rasp.engine.EngineBoot;
-import com.endpoint.rasp.engine.common.log.ErrorType;
 import com.endpoint.rasp.common.LogTool;
 import com.google.gson.Gson;
 import rpc.ErrorCode;
@@ -20,6 +20,7 @@ import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.Semaphore;
 
 /**
@@ -273,14 +274,14 @@ public class RpcService extends BaseService implements ServiceStrategyHandler {
                 //String json = changeDataToJson(post_data);
 //               LogTool.info("日志json:"+json);
                 LogTool.info(post_data);
-                result.put("errorcode", 0);
+                result.put("errorcode", Optional.of(0));
                 result.put("msg", "成功");
             } catch (Exception e) {
-                result.put("errorcode", 5);
+                result.put("errorcode", Optional.of(5));
                 result.put("msg", "系统接受信息失败");
             }
         } else {
-            result.put("errorcode", 5);
+            result.put("errorcode", Optional.of(5));
             result.put("msg", "没有对应的API");
         }
         return new Gson().toJson(result);

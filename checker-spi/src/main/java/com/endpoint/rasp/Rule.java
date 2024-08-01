@@ -6,21 +6,34 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @author feiwoscun
  */
 public class Rule {
-    @JsonProperty("id")
-    private String id;
+    @JsonProperty("className")
+    private String className;
 
-    @JsonProperty("description")
-    private String description;
+    @JsonProperty("methodName")
+    private String methodName;
 
+    @JsonProperty("bit")
+    private String bit;
     @JsonProperty("pattern")
     private String pattern;
+    @JsonProperty("ifStatic")
+    private boolean ifStatic;
 
-    public String getDescription() {
-        return description;
+    public boolean isIfStatic() {
+        return ifStatic;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
+    public void setIfStatic(boolean ifStatic) {
+        this.ifStatic = ifStatic;
+    }
+
+
+    public String getClassName() {
+        return className;
+    }
+
+    public void setClassName(String className) {
+        this.className = className;
     }
 
     public String getPattern() {
@@ -31,11 +44,19 @@ public class Rule {
         this.pattern = pattern;
     }
 
-    public String getId() {
-        return id;
+    public String getBit() {
+        return bit;
     }
 
-    public void setId(String id) {
-        this.id = id;
+    public void setBit(String bit) {
+        this.bit = bit;
+    }
+
+    public String getMethodName() {
+        return methodName;
+    }
+
+    public void setMethodName(String methodName) {
+        this.methodName = methodName;
     }
 }

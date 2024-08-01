@@ -6,6 +6,7 @@ import com.endpoint.rasp.checker.DefaultCheckChain;
 import com.endpoint.rasp.checker.GenericChecker;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 /**
@@ -16,7 +17,8 @@ import java.util.stream.Collectors;
  */
 public class CheckerContext {
 
-    private static Map<String, List<Checker>> checkContainer = new HashMap<>();
+    private static Map<String, List<Checker>> checkContainer = new ConcurrentHashMap<>(16);
+    private static List<Rule> listRules;
 
 
     @Deprecated
@@ -29,8 +31,8 @@ public class CheckerContext {
     }
 
     public synchronized static CheckChain getCheckChain(String method, Object[] args, ClassLoader classLoader, String engineName) {
-        Map<String, List<Checker>> mapCheckerByString = initContainer(classLoader);
-        List<Checker> checkers = mapCheckerByString.get(method);
+        initContainer(classLoader);
+        List<Checker> checkers = checkContainer.get(method);
         return new DefaultCheckChain(method, checkers.toArray(new Checker[0]), args, engineName);
     }
 
@@ -38,13 +40,10 @@ public class CheckerContext {
      * 初始化容器，从rules.json读取需要hook的类及回调
      *
      * @param classLoader
-     * @return
      */
-    private static synchronized Map<String, List<Checker>> initContainer(ClassLoader classLoader) {
+    private static synchronized void initContainer(ClassLoader classLoader) {
         ServiceLoader<RuleProvider> ruleProviders = loadService(classLoader);
-        Map<String, List<Checker>> mapCheckerByString = mapServiceListToMap(ruleProviders);
-        checkContainer = mapCheckerByString;
-        return mapCheckerByString;
+        checkContainer = mapServiceListToMap(ruleProviders);
     }
 
     /**
@@ -63,11 +62,12 @@ public class CheckerContext {
      */
     private static Map<String, List<Checker>> mapServiceListToMap(ServiceLoader<RuleProvider> serviceLoader) {
         final List<Rule> ruleList = new ArrayList<>();
-        serviceLoader.iterator().forEachRemaining(t -> t.loadRules(ruleList::addAll));
-
+        Iterator<RuleProvider> iterator = serviceLoader.iterator();
+        iterator.forEachRemaining(t -> t.loadRules(ruleList::addAll));
+        CheckerContext.listRules = ruleList;
         return ruleList.stream()
-                .map(t -> (Checker) new GenericChecker(t.getId(), t))
-                .collect(Collectors.groupingBy(Checker::getMethods));
+                .map(t -> (Checker) new GenericChecker(t.getMethodName(), t))
+                .collect(Collectors.groupingBy(Checker::getMethod));
 
     }
 
@@ -76,12 +76,12 @@ public class CheckerContext {
      *
      * @return 需要hook的方法名
      */
-    public static Set<String> getCheckContainer() {
-        if (checkContainer == null || checkContainer.isEmpty()) {
+    public static List<Rule> getCheckContainer() {
+        if (listRules == null || listRules.isEmpty()) {
             initContainer(CheckerContext.class.getClassLoader());
         }
 
-        return checkContainer.keySet();
+        return listRules;
     }
 
     /**
@@ -90,11 +90,15 @@ public class CheckerContext {
      * @param classLoader 服务发现所需要的类加载器
      * @return
      */
-    public static Set<String> getCheckContainer(ClassLoader classLoader) {
-        if (checkContainer == null || checkContainer.isEmpty()) {
+    public static List<Rule> getCheckContainer(ClassLoader classLoader) {
+        if (listRules == null || listRules.isEmpty()) {
             initContainer(classLoader);
         }
 
-        return checkContainer.keySet();
+        return listRules;
+    }
+
+    public static Checker[] getCheckers(String method) {
+        return checkContainer.get(method).toArray(new Checker[0]);
     }
 }

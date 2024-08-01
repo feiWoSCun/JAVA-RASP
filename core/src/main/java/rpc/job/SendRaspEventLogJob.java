@@ -48,7 +48,7 @@ public class SendRaspEventLogJob implements Runnable {
                         }
                     }
                 }
-                TimeUnit.SECONDS.sleep(5);
+                TimeUnit.SECONDS.sleep(3*60);
             } catch (InterruptedException e) {
                 LogTool.error(ErrorType.UPLOAD_LOG_ERROR, "线程打断,可能是因为触发卸载", e);
                 break;

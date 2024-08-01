@@ -1,7 +1,7 @@
 package rpc.service;
 
+import com.endpoint.rasp.common.ErrorType;
 import com.endpoint.rasp.engine.EngineBoot;
-import com.endpoint.rasp.engine.common.log.ErrorType;
 import com.endpoint.rasp.common.LogTool;
 import com.google.gson.Gson;
 import org.zeromq.SocketType;

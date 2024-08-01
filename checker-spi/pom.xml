@@ -10,11 +10,11 @@
     <packaging>jar</packaging>
     <dependencies>
         <!-- https://mvnrepository.com/artifact/org.codehaus.groovy/groovy-all -->
+        <!-- groovy包 -->
         <dependency>
             <groupId>org.codehaus.groovy</groupId>
             <artifactId>groovy-all</artifactId>
-            <version>3.0.19</version>
-            <type>pom</type>
+            <version>2.4.16</version>
         </dependency>
 
         <dependency>

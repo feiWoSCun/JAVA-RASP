@@ -1,4 +1,5 @@
 package com.endpoint.rasp.engine.hook;
+
 import com.endpoint.rasp.common.ErrorType;
 import com.endpoint.rasp.common.LogTool;
 import javassist.*;
@@ -40,17 +41,17 @@ public abstract class AbstractClassHook {
      *
      * @param ctClass 目标类
      */
-    protected abstract void hookMethod(CtClass ctClass) throws IOException, CannotCompileException, NotFoundException;
+    protected abstract void hookMethod(CtClass ctClass, String checkMethodName, String methodName, short bit, boolean ifStatic) throws IOException, CannotCompileException, NotFoundException;
 
     /**
-     * 转化目标类
-     *
-     * @param ctClass 待转化的类
-     * @return 转化之后类的字节码数组
+     * @param ctClass
+     * @param checkMethodName 需要调用的抓换函数
+     * @param methodName
+     * @return
      */
-    public byte[] transformClass(CtClass ctClass) {
+    public byte[] transformClass(CtClass ctClass, String checkMethodName, String methodName, short bit, boolean ifStatic) throws NotFoundException, CannotCompileException {
         try {
-            hookMethod(ctClass);
+            hookMethod(ctClass, checkMethodName, methodName, bit, ifStatic);
             return ctClass.toBytecode();
         } catch (Throwable e) {
             LOGGER.info("transform class " + ctClass.getName() + " failed", e);
@@ -286,39 +287,31 @@ public abstract class AbstractClassHook {
     public String getInvokeStaticSrc(Class invokeClass, String methodName, String paramString, Class... parameterTypes) {
         String src;
         String invokeClassName = invokeClass.getName();
-
-        StringBuilder parameterTypesString = new StringBuilder();
-        if (parameterTypes != null && parameterTypes.length > 0) {
-            for (Class parameterType : parameterTypes) {
-                if (parameterType.getName().startsWith("[")) {
-                    parameterTypesString.append("Class.forName(\"").append(parameterType.getName()).append("\"),");
-                } else {
-                    parameterTypesString.append(parameterType.getName()).append(".class,");
-                }
-            }
-            parameterTypesString = new StringBuilder(parameterTypesString.substring(0, parameterTypesString.length() - 1));
-        }
-        if (parameterTypesString.toString().isEmpty()) {
-            parameterTypesString = null;
-        } else {
-            parameterTypesString = new StringBuilder("new Class[]{" + parameterTypesString + "}");
-        }
+        //写死了
+        StringBuilder parameterTypesString = new StringBuilder("String.class" + "," + "Object[].class");
+        parameterTypesString = new StringBuilder("new Class[]{" + parameterTypesString + "}");
         //默认都是当前的类加载器
-        if (isLoadedByBootstrapLoader) {
-            src = "rpc.ClassloaderUtil.getRaspClassLoader().loadClass(\"" + invokeClassName + "\").getMethod(\"" + methodName +
-                    "\"," + parameterTypesString + ").invoke(null";
-            if (paramString != null && !paramString.isEmpty()) {
-                src += (",new Object[]{" + paramString + "});");
-            } else {
-                src += ",null);";
-            }
-            src = "try {System.out.print(88888888);" + src + "} catch (Throwable t) {if(t.getCause() != null && t.getCause().getClass()" +
-                    ".getName().equals(\"com.endpoint.rasp.engine.common.exception.SecurityException\")){throw t;}}";
+        src = "com.endpoint.rasp.common.ClassloaderUtil.getRaspClassLoader().loadClass(\"" + invokeClassName + "\").getMethod(\"" + methodName +
+                "\"," + parameterTypesString + ").invoke(null,";
+        if (paramString.contains("$")) {
+            src += paramString;
+            src += ");";
         } else {
-            src = invokeClassName + '.' + methodName + "(" + paramString + ");";
-            src = "try {System.out.print(1);" + src + "} catch (Throwable t) {if(t.getClass()" +
-                    ".getName().equals(\"com.endpoint.rasp.engine.common.exception.SecurityException\")){throw t;}}";
+            src += "null);";
         }
+        src = "try {System.out.print(\"开始进行内存马检测\");" + src + "} catch (Throwable t) {if(t.getCause() != null && t.getCause().getClass()" +
+                ".getName().equals(\"com.endpoint.rasp.engine.common.exception.SecurityException\")){throw t;}}";
+
+
+/*        try {System.out.print("开始进行内存马检测");
+            com.endpoint.rasp.common.ClassloaderUtil.getRaspClassLoader().loadClass("com.endpoint.rasp.engine.hook.GenerateContextHook").
+                    getMethod("defaultCheckEnter",new Class[]{String.class,Object[].class}).
+                    invoke(null,"addServletMappingDecoded",new Object[]{$0,$1,$2,$3});
+        }catch (Throwable t)
+        {if(t.getCause() != null && t.getCause().getClass().getName().equals("com.endpoint.rasp.engine.common.exception.SecurityException"))
+        {
+            throw t;}}*/
         return src;
     }
+
 }

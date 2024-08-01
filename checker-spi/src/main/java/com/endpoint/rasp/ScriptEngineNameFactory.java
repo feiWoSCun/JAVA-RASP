@@ -15,8 +15,8 @@ public class ScriptEngineNameFactory {
 
 
     public static ScriptEngine doCreateEngine(String engineName, Object[] args) {
-
-        ScriptEngineManager manager = new ScriptEngineManager();
+//莫名其妙解决了一个bug，添加一个自定义的类加载器就行了，why？
+        ScriptEngineManager manager = new ScriptEngineManager(ScriptEngineNameFactory.class.getClassLoader());
         ScriptEngine engine = manager.getEngineByName(engineName);
         String param = "param";
         if (engine == null) {

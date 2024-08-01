@@ -5,8 +5,8 @@ package com.endpoint.rasp.common.exception;
  *
  * Created by yunchao.zheng on 2023-03-17
  */
-public class AnnotationScannerException extends RuntimeException {
-    public AnnotationScannerException(Throwable cause) {
+public class HookMethodException extends RuntimeException {
+    public HookMethodException(Throwable cause) {
         super(cause);
     }
 }

@@ -1,6 +1,7 @@
 package rpc.job;
 
-import com.endpoint.rasp.engine.common.log.ErrorType;
+
+import com.endpoint.rasp.common.ErrorType;
 import com.endpoint.rasp.common.LogTool;
 import rpc.service.BaseService;
 
@@ -16,7 +17,7 @@ public class UpdateRaspConfigJob implements Runnable {
         BaseService baseService = BaseService.getInstance();
         while (!Thread.interrupted()) {
             try {
-                TimeUnit.SECONDS.sleep(5);
+                TimeUnit.SECONDS.sleep(3*60);
                 if (baseService.getRpcChannelHash() != null) {
                     baseService.updateRaspConfig();
                 }

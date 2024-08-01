@@ -3,7 +3,6 @@ package com.endpoint.rasp.checker;
 import com.endpoint.rasp.Rule;
 import com.endpoint.rasp.common.ErrorType;
 import com.endpoint.rasp.common.LogTool;
-import org.apache.log4j.Logger;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
@@ -16,11 +15,11 @@ import javax.script.ScriptException;
  */
 public class GenericChecker implements Checker {
 
-    private final String methods;
+    private final String method;
     private final Rule rule;
 
-    public GenericChecker(String methods, Rule rule) {
-        this.methods = methods;
+    public GenericChecker(String method, Rule rule) {
+        this.method = method;
         this.rule = rule;
     }
 
@@ -39,17 +38,17 @@ public class GenericChecker implements Checker {
             LogTool.error(ErrorType.RUNTIME_ERROR, "调用失败，将尝试执行调用链的下一个", e);
             return true;
         }
-        return false;
+        return true;
     }
 
     @Override
-    public String getMethods() {
-        return methods;
+    public String getMethod() {
+        return method;
     }
 
     @Override
     public boolean isMatch(String method) {
-        return methods.equals(method);
+        return this.method.equals(method);
     }
 
 
