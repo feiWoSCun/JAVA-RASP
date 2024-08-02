@@ -76,7 +76,7 @@ public class CheckerContext {
      *
      * @return 需要hook的方法名
      */
-    public static List<Rule> getCheckContainer() {
+    public static List<Rule> getCheckRuleContainer() {
         if (listRules == null || listRules.isEmpty()) {
             initContainer(CheckerContext.class.getClassLoader());
         }
@@ -90,7 +90,7 @@ public class CheckerContext {
      * @param classLoader 服务发现所需要的类加载器
      * @return
      */
-    public static List<Rule> getCheckContainer(ClassLoader classLoader) {
+    public static List<Rule> getCheckRuleContainer(ClassLoader classLoader) {
         if (listRules == null || listRules.isEmpty()) {
             initContainer(classLoader);
         }

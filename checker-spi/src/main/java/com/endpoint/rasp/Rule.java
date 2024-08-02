@@ -2,6 +2,8 @@ package com.endpoint.rasp;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Objects;
+
 /**
  * @author feiwoscun
  */
@@ -18,6 +20,17 @@ public class Rule {
     private String pattern;
     @JsonProperty("ifStatic")
     private boolean ifStatic;
+    @JsonProperty("argsIndex")
+    private int[] argsIndex;
+
+    public int[] getArgsIndex() {
+        return argsIndex;
+    }
+
+    public void setArgsIndex(int[] argsIndex) {
+        this.argsIndex = argsIndex;
+    }
+
 
     public boolean isIfStatic() {
         return ifStatic;
@@ -58,5 +71,26 @@ public class Rule {
 
     public void setMethodName(String methodName) {
         this.methodName = methodName;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || this.getClass() != o.getClass()) {
+            return false;
+        }
+        Rule rule = (Rule) o;
+        return ifStatic == rule.ifStatic && Objects.equals(className, rule.className) && Objects.equals(methodName, rule.methodName) && Objects.equals(bit, rule.bit);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(className, methodName, bit, ifStatic);
+    }
+
+    public String getKey() {
+        return this.className + this.methodName + this.bit + this.ifStatic;
     }
 }

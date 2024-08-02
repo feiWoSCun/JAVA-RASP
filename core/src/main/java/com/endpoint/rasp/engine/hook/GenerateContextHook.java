@@ -3,11 +3,13 @@ package com.endpoint.rasp.engine.hook;
 
 import com.endpoint.rasp.CheckerContext;
 import com.endpoint.rasp.checker.CheckChain;
+import com.endpoint.rasp.common.ArgsEnums;
 import com.endpoint.rasp.common.exception.HookMethodException;
 import javassist.CannotCompileException;
 import javassist.CtClass;
 import javassist.NotFoundException;
 
+import java.util.Arrays;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -29,14 +31,14 @@ public class GenerateContextHook extends AbstractMRVHook {
      * @param ctClass
      * @param checkMethodName
      * @param methodName
-     * @param bit
+     * @param argsIndex
      * @param ifStatic        是否静态方法
      * @return
      */
-    public static byte[] doHook(CtClass ctClass, String checkMethodName, String methodName, short bit, boolean ifStatic) {
+    public static byte[] doHook(CtClass ctClass, String checkMethodName, String methodName, int[] argsIndex, boolean ifStatic) {
         byte[] bytes = null;
         try {
-            bytes = GENERATE_CONTEXT_HOOK.transformClass(ctClass, checkMethodName, methodName, bit, ifStatic);
+            bytes = GENERATE_CONTEXT_HOOK.transformClass(ctClass, checkMethodName, methodName, argsIndex, ifStatic);
         } catch (NotFoundException | CannotCompileException e) {
             throw new HookMethodException(e);
         }
@@ -52,15 +54,15 @@ public class GenerateContextHook extends AbstractMRVHook {
      * @param ctClass         目标类
      * @param checkMethodName 目标方法内需要执行的方法
      * @param methodName      需要被hook的方法
-     * @param bit             方法的参数个数
+     * @param argsIndex       方法的参数下标
      * @throws CannotCompileException
      * @throws NotFoundException
      */
     @Override
-    protected void hookMethod(CtClass ctClass, String checkMethodName, String methodName, short bit, boolean ifStatic) throws CannotCompileException, NotFoundException {
+    protected void hookMethod(CtClass ctClass, String checkMethodName, String methodName, int[] argsIndex, boolean ifStatic) throws CannotCompileException, NotFoundException {
         String src;
 
-        src = getInvokeStaticSrc(GenerateContextHook.class, checkMethodName, generateStrings(bit, ifStatic, methodName), String.class, Object[].class);
+        src = getInvokeStaticSrc(GenerateContextHook.class, checkMethodName, generateStrings(argsIndex, ifStatic, methodName), String.class, Object[].class);
         insertBefore(ctClass, methodName, "(Ljava/lang/String;Ljava/lang/String;Z)V", src);
     }
 
@@ -84,26 +86,26 @@ public class GenerateContextHook extends AbstractMRVHook {
     /**
      * !静态方法需要拿到this 使用 $0
      *
-     * @param n
+     * @param argIndex
      * @param ifStatic
      * @return
      */
-    private String generateStrings(int n, boolean ifStatic, String methodName) {
+    private String generateStrings(int[] argIndex, boolean ifStatic, String methodName) {
         String params = null;
         if (ifStatic) {
-            params = IntStream.rangeClosed(1, n-1)
+            params = Arrays.stream(argIndex)
                     .mapToObj(i -> "$" + i)
                     .collect(Collectors.joining(","));
             if (!params.isEmpty()) {
-                return  "new Object[]{"+'"'+methodName+'"'+","+params+"}";
+                return "new Object[]{" + '"' + methodName + '"' + "," + params + "}";
             }
-             return methodName;
+            return methodName;
         }
-        params = IntStream.rangeClosed(0, n-1)
+        params = Arrays.stream(argIndex)
                 .mapToObj(i -> "$" + i)
                 .collect(Collectors.joining(","));
         if (!params.isEmpty()) {
-            return  "new Object[]{"+'"'+methodName+'"'+","+"new Object[]{"+params+"}}";
+            return "new Object[]{" + '"' + methodName + '"' + "," + "new Object[]{" + params + "}}";
         }
         return methodName;
     }
