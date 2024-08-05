@@ -41,7 +41,7 @@ public abstract class AbstractClassHook {
      *
      * @param ctClass 目标类
      */
-    protected abstract void hookMethod(CtClass ctClass, String checkMethodName, String methodName, int[] argsIndex,String desc, boolean ifStatic) throws IOException, CannotCompileException, NotFoundException;
+    protected abstract void hookMethod(CtClass ctClass, String key,String checkMethodName, String methodName, int[] argsIndex,String desc, boolean ifStatic) throws IOException, CannotCompileException, NotFoundException;
 
     /**
      * @param ctClass
@@ -49,9 +49,9 @@ public abstract class AbstractClassHook {
      * @param methodName
      * @return
      */
-    public byte[] transformClass(CtClass ctClass, String checkMethodName, String methodName,  int[] argsIndex,String desc, boolean ifStatic) throws NotFoundException, CannotCompileException {
+    public byte[] transformClass(CtClass ctClass ,String key, String checkMethodName, String methodName,  int[] argsIndex,String desc, boolean ifStatic) throws NotFoundException, CannotCompileException {
         try {
-            hookMethod(ctClass, checkMethodName, methodName, argsIndex,desc, ifStatic);
+            hookMethod(ctClass,  key,checkMethodName, methodName, argsIndex,desc, ifStatic);
             return ctClass.toBytecode();
         } catch (Throwable e) {
             LOGGER.info("transform class " + ctClass.getName() + " failed", e);
@@ -205,7 +205,7 @@ public abstract class AbstractClassHook {
         if ("<init>".equals(methodName)) {
             return getConstructor(ctClass, desc);
         }
-        LinkedList<CtBehavior> methods = new LinkedList<CtBehavior>();
+         LinkedList<CtBehavior> methods = new LinkedList<CtBehavior>();
         if (desc == null || desc.isEmpty()) {
             CtMethod[] allMethods = ctClass.getDeclaredMethods();
             if (allMethods != null) {

@@ -5,9 +5,11 @@ import com.endpoint.rasp.CheckerContext;
 import com.endpoint.rasp.checker.CheckChain;
 import com.endpoint.rasp.common.LogTool;
 import com.endpoint.rasp.common.exception.HookMethodException;
+import com.google.gson.Gson;
 import javassist.CannotCompileException;
 import javassist.CtClass;
 import javassist.NotFoundException;
+import rpc.job.SendRaspEventLogJob;
 
 import java.util.Arrays;
 import java.util.List;
@@ -35,10 +37,10 @@ public class GenerateContextHook extends AbstractMRVHook {
      * @param ifStatic        是否静态方法
      * @return
      */
-    public static byte[] doHook(CtClass ctClass, String checkMethodName, String methodName, int[] argsIndex, String desc,boolean ifStatic) {
+    public static byte[] doHook(CtClass ctClass, String key, String checkMethodName, String methodName, int[] argsIndex, String desc, boolean ifStatic) {
         byte[] bytes = null;
         try {
-            bytes = GENERATE_CONTEXT_HOOK.transformClass(ctClass, checkMethodName, methodName, argsIndex,desc, ifStatic);
+            bytes = GENERATE_CONTEXT_HOOK.transformClass(ctClass, key, checkMethodName, methodName, argsIndex, desc, ifStatic);
         } catch (NotFoundException | CannotCompileException e) {
             throw new HookMethodException(e);
         }
@@ -59,10 +61,10 @@ public class GenerateContextHook extends AbstractMRVHook {
      * @throws NotFoundException
      */
     @Override
-    protected void hookMethod(CtClass ctClass, String checkMethodName, String methodName, int[] argsIndex, String desc, boolean ifStatic) throws CannotCompileException, NotFoundException {
+    protected void hookMethod(CtClass ctClass, String key, String checkMethodName, String methodName, int[] argsIndex, String desc, boolean ifStatic) throws CannotCompileException, NotFoundException {
         String src;
 
-        src = getInvokeStaticSrc(GenerateContextHook.class, checkMethodName, generateStrings(argsIndex, ifStatic, methodName), String.class, Object[].class);
+        src = getInvokeStaticSrc(GenerateContextHook.class, checkMethodName, generateStrings(argsIndex, ifStatic, key), String.class, Object[].class);
         insertBefore(ctClass, methodName, desc, src);
     }
 
@@ -84,7 +86,8 @@ public class GenerateContextHook extends AbstractMRVHook {
             results.forEach(System.out::println);
         }
         LogTool.info("尝试通过zeromq发送检测结果");
-
+        String json = new Gson().toJson(results);
+        SendRaspEventLogJob.addLog(json);
     }
 
     /**
@@ -94,24 +97,22 @@ public class GenerateContextHook extends AbstractMRVHook {
      * @param ifStatic
      * @return
      */
-    private String generateStrings(int[] argIndex, boolean ifStatic, String methodName) {
+    private String generateStrings(int[] argIndex, boolean ifStatic, String key) {
         String params = null;
+        if (argIndex == null || argIndex.length == 0) {
+            return "new Object[]{" + '"' + key + '"' + "," + "new Object[]{" + null + "}}";
+        }
         if (ifStatic) {
             params = Arrays.stream(argIndex)
                     .mapToObj(i -> "$" + i)
                     .collect(Collectors.joining(","));
-            if (!params.isEmpty()) {
-                return "new Object[]{" + '"' + methodName + '"' + "," + params + "}";
-            }
-            return methodName;
+            return "new Object[]{" + '"' + key + '"' + "," + "new Object[]{" + params + "}}";
         }
         params = Arrays.stream(argIndex)
                 .mapToObj(i -> "$" + i)
                 .collect(Collectors.joining(","));
-        if (!params.isEmpty()) {
-            return "new Object[]{" + '"' + methodName + '"' + "," + "new Object[]{" + params + "}}";
-        }
-        return methodName;
+        return "new Object[]{" + '"' + key + '"' + "," + "new Object[]{" + params + "}}";
+
     }
 
 }

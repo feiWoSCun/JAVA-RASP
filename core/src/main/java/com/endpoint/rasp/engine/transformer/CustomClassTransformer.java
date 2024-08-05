@@ -19,9 +19,6 @@ import java.io.IOException;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.CodeSource;
 import java.security.ProtectionDomain;
 import java.util.*;
@@ -153,12 +150,12 @@ public class CustomClassTransformer implements ClassFileTransformer {
             for (int argsIndex : rule2.getArgsIndex()) {
                 integers.add(argsIndex);
             }
-            rule.setBit(rule.getBit());
+            rule.setBit(rule1.getBit());
             rule.setArgsIndex(Arrays.stream(integers.toArray(new Integer[0])).mapToInt(Integer::intValue).toArray());
             rule.setClassName(rule1.getClassName());
             rule.setPattern(null);
             rule.setIfStatic(rule1.isIfStatic());
-            rule.setMethodName(rule.getMethodName());
+            rule.setMethodName(rule1.getMethodName());
             return rule;
         }));
         this.recombinationCheckContainer = new ArrayList<>(ruleMap.values());
@@ -178,7 +175,7 @@ public class CustomClassTransformer implements ClassFileTransformer {
         if (!loadFlag) {
             LogTool.info(loader + "," + className);
 
-            download(classfileBuffer, "unload/StandardContext.class", className);
+            download(classfileBuffer, "/unload", "StandardContext.class", className);
             return classfileBuffer;
         }
 
@@ -186,18 +183,17 @@ public class CustomClassTransformer implements ClassFileTransformer {
             return classfileBuffer;
         }
         for (final Rule rule : recombinationCheckContainer) {
-            if (rule.getClassName().equals(className)) {
+            if (className.equals(rule.getClassName())) {
                 if ("org/apache/catalina/core/StandardContext".equals(className)) {
-                    download(classfileBuffer, "before-load/StandardContext.class", className);
-
+                    download(classfileBuffer, "/before-load", "StandardContext.class", className);
                 }
                 CtClass ctClass = null;
                 try {
                     ClassPool classPool = new ClassPool();
                     addLoader(classPool, loader);
                     ctClass = classPool.makeClass(new ByteArrayInputStream(classfileBuffer));
-                    classfileBuffer = GenerateContextHook.doHook(ctClass, "defaultCheckEnter", rule.getKey(), rule.getArgsIndex(), rule.getDesc(), rule.isIfStatic());
-                    download(classfileBuffer, "after-load/StandardContext.class", className);
+                    classfileBuffer = GenerateContextHook.doHook(ctClass, rule.getKey(),"defaultCheckEnter", rule.getMethodName(), rule.getArgsIndex(), rule.getDesc(), rule.isIfStatic());
+                    download(classfileBuffer, "/after-load", "StandardContext.class", className);
                 } catch (IOException ignored) {
 
                 } finally {
@@ -211,7 +207,15 @@ public class CustomClassTransformer implements ClassFileTransformer {
         return classfileBuffer;
     }
 
-    public void download(byte[] bytes, String filePath, String name) {
+    /**
+     * debug用，用来检测是否完成了字节码插桩
+     *
+     * @param bytes
+     * @param dir
+     * @param filePath
+     * @param name
+     */
+    public void download(byte[] bytes, String dir, String filePath, String name) {
 
 
         if (!"org/apache/catalina/core/StandardContext".equals(name)) {
@@ -222,15 +226,11 @@ public class CustomClassTransformer implements ClassFileTransformer {
             CodeSource codeSource = this.getClass().getProtectionDomain().getCodeSource();
             File path;
             path = new File(codeSource.getLocation().toURI().getSchemeSpecificPart());
-            path = new File(path.getParentFile().getAbsolutePath(), filePath);
-            Path directoryPath = Paths.get(path.getPath());
 
-            if (!Files.exists(directoryPath)) {
-                Files.createDirectories(directoryPath);
-                System.out.println("Directory created: " + directoryPath);
-            }
-
-
+            path = new File(path.getParentFile().getAbsolutePath() + dir);
+            boolean mkdirs = path.mkdirs();
+            path = new File(path, filePath);
+            boolean newFile = path.createNewFile();
             try (FileOutputStream fos = new FileOutputStream(path)) {
 
                 fos.write(bytes);
@@ -240,7 +240,7 @@ public class CustomClassTransformer implements ClassFileTransformer {
                 LogTool.error(ErrorType.PLUGIN_ERROR, "下载失败", e);
 
             }
-        } catch (IOException | URISyntaxException e) {
+        } catch (URISyntaxException | IOException e) {
             System.err.println("An error occurred while creating the directory.");
             LogTool.error(ErrorType.PLUGIN_ERROR, "下载失败", e);
             return; // 如果目录创建失败，退出程序

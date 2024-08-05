@@ -102,6 +102,6 @@ public class Rule {
     }
 
     public String getKey() {
-        return this.className + this.methodName + this.bit + this.ifStatic;
+        return this.className + this.methodName + this.bit + this.ifStatic+this.desc;
     }
 }

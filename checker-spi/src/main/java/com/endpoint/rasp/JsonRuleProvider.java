@@ -8,6 +8,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.security.CodeSource;
 import java.util.List;
 import java.util.function.Function;
 
@@ -16,6 +18,17 @@ import java.util.function.Function;
  */
 public class JsonRuleProvider implements RuleProvider {
     private List<Rule> rules;
+    private static final String SPI_URL;
+
+    static {
+        try {
+            CodeSource codeSource = JsonRuleProvider.class.getProtectionDomain().getCodeSource();
+            File f=new File(codeSource.getLocation().toURI().getSchemeSpecificPart());
+            SPI_URL  = f.getParent();
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     @Override
     public void loadRules() {
@@ -32,7 +45,7 @@ public class JsonRuleProvider implements RuleProvider {
         ObjectMapper mapper = new ObjectMapper();
         try {
             this.rules = mapper.readValue(
-                    new File("/home/f/文档/java_project/script-engine/src/main/resources/rule.json"), new TypeReference<List<Rule>>() {
+                    new File(SPI_URL,"rule.json"), new TypeReference<List<Rule>>() {
                     });
             if (function != null) {
                 function.apply(rules);
