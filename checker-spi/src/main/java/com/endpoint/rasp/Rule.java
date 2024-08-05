@@ -89,11 +89,11 @@ public class Rule {
         if (this == o) {
             return true;
         }
-        if (o == null || this.getClass() != o.getClass()) {
+        if (o == null || getClass() != o.getClass()) {
             return false;
         }
         Rule rule = (Rule) o;
-        return ifStatic == rule.ifStatic && Objects.equals(className, rule.className) && Objects.equals(methodName, rule.methodName) && Objects.equals(bit, rule.bit);
+        return ifStatic == rule.ifStatic && Objects.equals(className, rule.className) && Objects.equals(methodName, rule.methodName) && Objects.equals(bit, rule.bit) && Objects.deepEquals(argsIndex, rule.argsIndex) && Objects.equals(desc, rule.desc);
     }
 
     @Override

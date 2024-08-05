@@ -17,7 +17,7 @@
       1
     ],
     "desc": "(Ljava/lang/String;)V",
-    "pattern": "def greet(param1) {System.out.println('进入到方法：private static void doTest(String) ,获取到参数：'+param1)}\n greet(param1)"
+    "pattern": "def greet(param0) {System.out.println('进入到方法：private static void doTest(String) ,获取到参数：'+param0)}\n greet(param0)"
   },
   {
     "className": "com/feiwoscun/server/Test2",
