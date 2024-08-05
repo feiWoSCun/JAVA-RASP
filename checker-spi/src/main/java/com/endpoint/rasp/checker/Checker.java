@@ -1,7 +1,6 @@
 package com.endpoint.rasp.checker;
 
-import javax.script.ScriptEngine;
-import java.util.Set;
+import java.util.List;
 import java.util.function.Function;
 
 /**
@@ -42,6 +41,6 @@ public interface Checker {
         return isMatch(method) && apply && defaultReturn(checkChain);
     }
 
-    String getMethod();
+    String getKey();
 
 }

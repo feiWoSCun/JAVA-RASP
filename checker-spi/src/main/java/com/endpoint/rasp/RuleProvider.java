@@ -12,6 +12,6 @@ public interface RuleProvider {
 
     List<Rule> getRules();
 
-    <R>void loadRules(Function<List<Rule>, R> function);
+    <R> void loadRules(Function<List<Rule>, R> function);
 
 }

@@ -41,7 +41,7 @@ public abstract class AbstractClassHook {
      *
      * @param ctClass 目标类
      */
-    protected abstract void hookMethod(CtClass ctClass, String checkMethodName, String methodName, int[] argsIndex, boolean ifStatic) throws IOException, CannotCompileException, NotFoundException;
+    protected abstract void hookMethod(CtClass ctClass, String checkMethodName, String methodName, int[] argsIndex,String desc, boolean ifStatic) throws IOException, CannotCompileException, NotFoundException;
 
     /**
      * @param ctClass
@@ -49,9 +49,9 @@ public abstract class AbstractClassHook {
      * @param methodName
      * @return
      */
-    public byte[] transformClass(CtClass ctClass, String checkMethodName, String methodName,  int[] argsIndex, boolean ifStatic) throws NotFoundException, CannotCompileException {
+    public byte[] transformClass(CtClass ctClass, String checkMethodName, String methodName,  int[] argsIndex,String desc, boolean ifStatic) throws NotFoundException, CannotCompileException {
         try {
-            hookMethod(ctClass, checkMethodName, methodName, argsIndex, ifStatic);
+            hookMethod(ctClass, checkMethodName, methodName, argsIndex,desc, ifStatic);
             return ctClass.toBytecode();
         } catch (Throwable e) {
             LOGGER.info("transform class " + ctClass.getName() + " failed", e);
@@ -98,7 +98,7 @@ public abstract class AbstractClassHook {
             throws NotFoundException, CannotCompileException {
 
         LinkedList<CtBehavior> methods = getMethod(ctClass, methodName, desc, null);
-        if (methods != null && methods.size() > 0) {
+        if (methods != null && !methods.isEmpty()) {
             insertBefore(methods, src);
         } else {
             LOGGER.info("can not find method " + methodName + " " + desc + " in class " + ctClass.getName());
@@ -299,7 +299,7 @@ public abstract class AbstractClassHook {
         } else {
             src += "null);";
         }
-        src = "try {System.out.print(\"begin hook\");" + src + "} catch (Throwable t) {if(t.getCause() != null && t.getCause().getClass()" +
+        src = "try {System.out.println(\"begin hook\");" + src + "} catch (Throwable t) {if(t.getCause() != null && t.getCause().getClass()" +
                 ".getName().equals(\"com.endpoint.rasp.engine.common.exception.SecurityException\")){throw t;}}";
 
 

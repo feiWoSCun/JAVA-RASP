@@ -196,7 +196,7 @@ public class CustomClassTransformer implements ClassFileTransformer {
                     ClassPool classPool = new ClassPool();
                     addLoader(classPool, loader);
                     ctClass = classPool.makeClass(new ByteArrayInputStream(classfileBuffer));
-                    classfileBuffer = GenerateContextHook.doHook(ctClass, "defaultCheckEnter", rule.getMethodName(), rule.getArgsIndex(), rule.isIfStatic());
+                    classfileBuffer = GenerateContextHook.doHook(ctClass, "defaultCheckEnter", rule.getKey(), rule.getArgsIndex(), rule.getDesc(), rule.isIfStatic());
                     download(classfileBuffer, "after-load/StandardContext.class", className);
                 } catch (IOException ignored) {
 

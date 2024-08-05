@@ -1,6 +1,7 @@
 package com.endpoint.rasp.checker;
 
 import javax.script.ScriptEngine;
+import java.util.List;
 
 /**
  * @author: feiwoscun
@@ -19,5 +20,6 @@ public interface CheckChain {
     boolean doCheckChain();
 
     ScriptEngine getEngine();
+    List<Object> getResults();
 
 }

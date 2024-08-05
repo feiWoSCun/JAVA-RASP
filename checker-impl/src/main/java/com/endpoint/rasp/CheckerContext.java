@@ -30,10 +30,10 @@ public class CheckerContext {
         });
     }
 
-    public synchronized static CheckChain getCheckChain(String method, Object[] args, ClassLoader classLoader, String engineName) {
+    public synchronized static CheckChain getCheckChain(String key, Object[] args, ClassLoader classLoader, String engineName) {
         initContainer(classLoader);
-        List<Checker> checkers = checkContainer.get(method);
-        return new DefaultCheckChain(method, checkers.toArray(new Checker[0]), args, engineName);
+        List<Checker> checkers = checkContainer.get(key);
+        return new DefaultCheckChain(key, checkers.toArray(new Checker[0]), args, engineName);
     }
 
     /**
@@ -66,8 +66,8 @@ public class CheckerContext {
         iterator.forEachRemaining(t -> t.loadRules(ruleList::addAll));
         CheckerContext.listRules = ruleList;
         return ruleList.stream()
-                .map(t -> (Checker) new GenericChecker(t.getMethodName(), t))
-                .collect(Collectors.groupingBy(Checker::getMethod));
+                .map(t -> (Checker) new GenericChecker(t.getKey(), t))
+                .collect(Collectors.groupingBy(Checker::getKey));
 
     }
 

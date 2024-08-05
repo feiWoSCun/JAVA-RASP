@@ -3,15 +3,15 @@ package com.endpoint.rasp.engine.hook;
 
 import com.endpoint.rasp.CheckerContext;
 import com.endpoint.rasp.checker.CheckChain;
-import com.endpoint.rasp.common.ArgsEnums;
+import com.endpoint.rasp.common.LogTool;
 import com.endpoint.rasp.common.exception.HookMethodException;
 import javassist.CannotCompileException;
 import javassist.CtClass;
 import javassist.NotFoundException;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 
 /**
@@ -35,10 +35,10 @@ public class GenerateContextHook extends AbstractMRVHook {
      * @param ifStatic        是否静态方法
      * @return
      */
-    public static byte[] doHook(CtClass ctClass, String checkMethodName, String methodName, int[] argsIndex, boolean ifStatic) {
+    public static byte[] doHook(CtClass ctClass, String checkMethodName, String methodName, int[] argsIndex, String desc,boolean ifStatic) {
         byte[] bytes = null;
         try {
-            bytes = GENERATE_CONTEXT_HOOK.transformClass(ctClass, checkMethodName, methodName, argsIndex, ifStatic);
+            bytes = GENERATE_CONTEXT_HOOK.transformClass(ctClass, checkMethodName, methodName, argsIndex,desc, ifStatic);
         } catch (NotFoundException | CannotCompileException e) {
             throw new HookMethodException(e);
         }
@@ -59,27 +59,31 @@ public class GenerateContextHook extends AbstractMRVHook {
      * @throws NotFoundException
      */
     @Override
-    protected void hookMethod(CtClass ctClass, String checkMethodName, String methodName, int[] argsIndex, boolean ifStatic) throws CannotCompileException, NotFoundException {
+    protected void hookMethod(CtClass ctClass, String checkMethodName, String methodName, int[] argsIndex, String desc, boolean ifStatic) throws CannotCompileException, NotFoundException {
         String src;
 
         src = getInvokeStaticSrc(GenerateContextHook.class, checkMethodName, generateStrings(argsIndex, ifStatic, methodName), String.class, Object[].class);
-        insertBefore(ctClass, methodName, "(Ljava/lang/String;Ljava/lang/String;Z)V", src);
+        insertBefore(ctClass, methodName, desc, src);
     }
 
     /**
-     * @param methodName
+     * @param key
      * @param args
      */
-    public static void defaultCheckEnter(String methodName, Object... args) {
-        CheckChain checkChain = CheckerContext.getCheckChain(methodName, args, GenerateContextHook.class.getClassLoader(), "groovy");
-        boolean result = true;
+    public static void defaultCheckEnter(String key, Object... args) {
+        CheckChain checkChain = CheckerContext.getCheckChain(key, args, GenerateContextHook.class.getClassLoader(), "groovy");
+        List<Object> results = null;
         try {
-            result = checkChain.doCheckChain();
+            checkChain.doCheckChain();
+            results = checkChain.getResults();
         } catch (Exception ignored) {
+            //todo
         }
-        if (result) {
-            System.out.println("检测成功");
+        LogTool.info("执行检测链结束，打印每个链检测结果，后续可以拓展成文件或者日志");
+        if (results != null) {
+            results.forEach(System.out::println);
         }
+        LogTool.info("尝试通过zeromq发送检测结果");
 
     }
 

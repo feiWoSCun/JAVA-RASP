@@ -23,6 +23,9 @@ public class Rule {
     @JsonProperty("argsIndex")
     private int[] argsIndex;
 
+    @JsonProperty("desc")
+    private String desc;
+
     public int[] getArgsIndex() {
         return argsIndex;
     }
@@ -71,6 +74,14 @@ public class Rule {
 
     public void setMethodName(String methodName) {
         this.methodName = methodName;
+    }
+
+    public String getDesc() {
+        return desc;
+    }
+
+    public void setDesc(String desc) {
+        this.desc = desc;
     }
 
     @Override

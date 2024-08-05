@@ -6,7 +6,6 @@ import com.endpoint.rasp.common.constant.RaspArgsConstant;
 import com.endpoint.rasp.engine.transformer.CustomClassTransformer;
 import org.apache.log4j.PropertyConfigurator;
 import rpc.service.BaseService;
-import rpc.service.RpcService;
 import rpc.service.ServiceStrategyFactory;
 import rpc.service.ZeroMQService;
 
@@ -27,11 +26,8 @@ public class EngineBoot {
     /**
      * 注入进程PID
      */
-    public static String raspPid;
     private final AtomicBoolean isBindRef = new AtomicBoolean(false);
     public static EngineBoot INSTANCE;
-    public static String raspServerType = null;
-    public static int VERSION = 1;
     public static Map<String, String> args;
 
     /**
@@ -86,25 +82,12 @@ public class EngineBoot {
         }
         initTransformer();
 
-        //测试代码：验证字节码是否被重新生成
-/*        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    TimeUnit.SECONDS.sleep(10);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                transformer.testRetransformHook();
-            }
-        }).start();*/
         addHandler();
         BaseService.getInstance().init(this, args.get(RaspArgsConstant._HOME) + File.separator + RaspArgsConstant.LIB + File.separator);
         AnsiLog.info("[E-RASP] Engine Initialized ");
     }
 
     private void addHandler() {
-        ServiceStrategyFactory.addBean(new RpcService());
         ServiceStrategyFactory.addBean(new ZeroMQService());
     }
 
@@ -155,24 +138,6 @@ public class EngineBoot {
             LogTool.info("【rasp】rasp安装失败，或许rasp已安装");
         }
         transformer.retransformHooks();
-    }
-
-    public void upgrade(Instrumentation inst) {
-//        if (transformer != null) {
-//            release(null);
-//            transformer.retransformEngine();
-//        }
-////        transformer = new CustomClassTransformer(instrumentation);
-////        transformer.retransformHooks();
-//        instrumentation = inst;
-//        try {
-//            initTransformer(inst);
-//        }catch (Exception e){
-//            e.printStackTrace();
-//        }
-////        deleteTmpDir();
-//        //Test--测试定时更新
-////        TestUpgrade.upgradeCycle(this);
     }
 
     /**

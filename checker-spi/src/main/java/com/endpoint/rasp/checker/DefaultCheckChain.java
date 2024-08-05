@@ -3,6 +3,8 @@ package com.endpoint.rasp.checker;
 import com.endpoint.rasp.ScriptEngineNameFactory;
 
 import javax.script.ScriptEngine;
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -14,19 +16,19 @@ import javax.script.ScriptEngine;
 public class DefaultCheckChain implements CheckChain {
     private final Checker[] checkers;
     private final Object[] args;
-    private final String method;
+    private final String key;
     private int pos = 0;
     private final int checkLen;
-
-
+    private final List<Object> results;
     private final ScriptEngine scriptEngine;
 
-    public DefaultCheckChain(String method, Checker[] checkers, Object[] args, String engineName) {
+    public DefaultCheckChain(String key, Checker[] checkers, Object[] args, String engineName) {
         this.checkers = checkers;
         this.args = args;
         this.checkLen = checkers.length;
-        this.method = method;
+        this.key = key;
         this.scriptEngine = ScriptEngineNameFactory.doCreateEngine(engineName, args);
+        this.results = new ArrayList<>();
     }
 
     @Override
@@ -36,7 +38,8 @@ public class DefaultCheckChain implements CheckChain {
         }
 
         Checker checker = checkers[pos++];
-        return checker.check(args, method, this);
+        return checker.check(args, key, this);
+
     }
 
     @Override
@@ -50,6 +53,11 @@ public class DefaultCheckChain implements CheckChain {
 
     public ScriptEngine getScriptEngine() {
         return scriptEngine;
+    }
+
+    @Override
+    public List<Object> getResults() {
+        return results;
     }
 
     public Checker[] getCheckers() {

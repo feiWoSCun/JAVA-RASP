@@ -5,7 +5,7 @@ import com.endpoint.rasp.common.ErrorType;
 import com.endpoint.rasp.common.LogTool;
 
 import javax.script.ScriptEngine;
-import javax.script.ScriptException;
+import java.util.List;
 
 /**
  * @author: feiwoscun
@@ -15,26 +15,31 @@ import javax.script.ScriptException;
  */
 public class GenericChecker implements Checker {
 
-    private final String method;
+    private final String key;
     private final Rule rule;
 
-    public GenericChecker(String method, Rule rule) {
-        this.method = method;
+    public GenericChecker(String key, Rule rule) {
+        this.key = key;
         this.rule = rule;
     }
 
     @Override
-    public boolean check(Object[] args, String method, CheckChain checkChain) {
+    public boolean check(Object[] args, String key, CheckChain checkChain) {
         //
-        return isMatch(method) && defaultCheck1(checkChain) && checkChain.doCheckChain();
+        return isMatch(key) && defaultCheck1(checkChain) && checkChain.doCheckChain();
     }
 
     private boolean defaultCheck1(CheckChain checkChain) {
         //执行检查逻辑
+        List<Object> results = checkChain.getResults();
         ScriptEngine engine = checkChain.getEngine();
+        Object ret;
         try {
-            engine.eval(rule.getPattern());
-        } catch (ScriptException e) {
+            ret = engine.eval(rule.getPattern());
+            results.add(ret);
+        } catch (Exception e) {
+            //可以通过设置抛出不同的异常，来判断是什么内存马
+            results.add(e);
             LogTool.error(ErrorType.RUNTIME_ERROR, "调用失败，将尝试执行调用链的下一个", e);
             return true;
         }
@@ -42,13 +47,13 @@ public class GenericChecker implements Checker {
     }
 
     @Override
-    public String getMethod() {
-        return method;
+    public String getKey() {
+        return key;
     }
 
     @Override
-    public boolean isMatch(String method) {
-        return this.method.equals(method);
+    public boolean isMatch(String key) {
+        return this.key.equals(key);
     }
 
 
