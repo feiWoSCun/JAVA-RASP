@@ -11,6 +11,7 @@
     <module>common</module>
       <module>checker-spi</module>
     <module>checker-impl</module>
+      <module>msg</module>
   </modules>
   <version>fei-1.0</version>
   <name>e-rasp-renew</name>

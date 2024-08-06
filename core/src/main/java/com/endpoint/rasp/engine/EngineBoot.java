@@ -83,7 +83,7 @@ public class EngineBoot {
         initTransformer();
 
         addHandler();
-        BaseService.getInstance().init(this, args.get(RaspArgsConstant._HOME) + File.separator + RaspArgsConstant.LIB + File.separator);
+        BaseService.getInstance().init( args.get(RaspArgsConstant._HOME) + File.separator + RaspArgsConstant.LIB + File.separator);
         AnsiLog.info("[E-RASP] Engine Initialized ");
     }
 

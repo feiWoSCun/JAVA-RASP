@@ -23,7 +23,11 @@
             <artifactId>common</artifactId>
             <version>fei-1.0</version>
         </dependency>
-
+        <dependency>
+            <groupId>com.endpoint.rasp</groupId>
+            <artifactId>msg</artifactId>
+            <version>fei-1.0</version>
+        </dependency>
         <dependency>
             <groupId>com.endpoint.rasp</groupId>
             <artifactId>checker-spi</artifactId>
