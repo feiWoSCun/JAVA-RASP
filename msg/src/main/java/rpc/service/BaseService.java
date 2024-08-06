@@ -75,10 +75,6 @@ public abstract class BaseService {
         return port;
     }
 
-    /**
-     * 兼容rpc
-     */
-    public abstract String getRpcChannelHash();
 
     public void close() {
     }

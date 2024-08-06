@@ -112,11 +112,6 @@ public class ZeroMQService extends BaseService implements ServiceStrategyHandler
         }
     }
 
-    @Override
-    public String getRpcChannelHash() {
-        return "zeromq";
-    }
-
 
     @Override
     public ServiceTypeEnum getServiceType() {

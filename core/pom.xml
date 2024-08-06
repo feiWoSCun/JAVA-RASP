@@ -75,11 +75,11 @@
                                         implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <mainClass>com.endpoint.rasp.engine.Core</mainClass>
                                     <manifestEntries>
-                                        <Created-By>core engine team, middleware group, alibaba inc.</Created-By>
+                                        <Created-By>feiwoscun</Created-By>
                                         <Implementation-Version>${project.version}</Implementation-Version>
-                                        <Implementation-Vendor-Id>com.taobao.arthas</Implementation-Vendor-Id>
+                                        <Implementation-Vendor-Id>com.feiwoscun</Implementation-Vendor-Id>
                                         <Specification-Version>${project.version}</Specification-Version>
-                                        <Specification-Title>arthas-core</Specification-Title>
+                                        <Specification-Title>core</Specification-Title>
                                     </manifestEntries>
                                 </transformer>
                             </transformers>

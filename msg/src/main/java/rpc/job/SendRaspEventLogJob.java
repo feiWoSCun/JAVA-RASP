@@ -34,7 +34,6 @@ public class SendRaspEventLogJob implements Runnable {
         BaseService baseService = BaseService.getInstance();
         while (!Thread.interrupted()) {
             try {
-                if (baseService.getRpcChannelHash() != null) {
                     int n;
                     if ((n = QUEUE.size()) > 0) {
                         for (int i = 0; i < n; i++) {
@@ -43,7 +42,6 @@ public class SendRaspEventLogJob implements Runnable {
                             baseService.sendAndGet(json);
                         }
                     }
-                }
                 TimeUnit.SECONDS.sleep(3*60);
             } catch (InterruptedException e) {
                 LogTool.error(ErrorType.UPLOAD_LOG_ERROR, "线程打断,可能是因为触发卸载", e);
