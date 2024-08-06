@@ -5,7 +5,10 @@ import java.util.function.Function;
 
 
 /**
- * @author feiwoscun
+ * @author: feiwoscun
+ * @date: 2024/7/31
+ * @email: 2825097536@qq.com
+ * @description:
  */
 public interface RuleProvider {
     void loadRules();

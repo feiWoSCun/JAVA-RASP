@@ -9,12 +9,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.CodeSource;
 import java.util.List;
 import java.util.function.Function;
 
 /**
- * @author feiwoscun
+ * @author: feiwoscun
+ * @date: 2024/7/31
+ * @email: 2825097536@qq.com
+ * @description:
  */
 public class JsonRuleProvider implements RuleProvider {
     private List<Rule> rules;
@@ -23,8 +28,8 @@ public class JsonRuleProvider implements RuleProvider {
     static {
         try {
             CodeSource codeSource = JsonRuleProvider.class.getProtectionDomain().getCodeSource();
-            File f=new File(codeSource.getLocation().toURI().getSchemeSpecificPart());
-            SPI_URL  = f.getParent();
+            File f = new File(codeSource.getLocation().toURI().getSchemeSpecificPart());
+            SPI_URL = f.getParent();
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         }
@@ -42,11 +47,12 @@ public class JsonRuleProvider implements RuleProvider {
 
     @Override
     public <R> void loadRules(Function<List<Rule>, R> function) {
-        ObjectMapper mapper = new ObjectMapper();
         try {
-            this.rules = mapper.readValue(
-                    new File(SPI_URL,"rule.json"), new TypeReference<List<Rule>>() {
-                    });
+            // 确保每次读取最新的文件内容
+            byte[] jsonData = Files.readAllBytes(Paths.get(SPI_URL, "rule.json"));
+            ObjectMapper mapper = new ObjectMapper();
+            this.rules = mapper.readValue(jsonData, new TypeReference<List<Rule>>() {
+            });
             if (function != null) {
                 function.apply(rules);
             }
