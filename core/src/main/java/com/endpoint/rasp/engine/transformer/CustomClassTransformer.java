@@ -219,10 +219,6 @@ public class CustomClassTransformer implements ClassFileTransformer {
     public void download(byte[] bytes, String dir, String filePath, String name) {
 
 
-        if (!"org/apache/catalina/core/StandardContext".equals(name)) {
-            return;
-
-        }
         try {
             CodeSource codeSource = this.getClass().getProtectionDomain().getCodeSource();
             File path;

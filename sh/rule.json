@@ -1,6 +1,6 @@
 [
   {
-    "className": "Test",
+    "className": "Main",
     "methodName": "doTest1",
     "ifStatic": true,
     "bit": 0,
@@ -9,7 +9,7 @@
     "pattern": "def greet() {System.out.println('进入到方法：private static void doTest(),获取到参数：')}\n greet()"
   },
   {
-    "className": "Test",
+    "className": "Main",
     "methodName": "doTest1",
     "ifStatic": true,
     "bit": 1,
@@ -20,7 +20,7 @@
     "pattern": "def greet(param0) {System.out.println('进入到方法：private static void doTest(String) ,获取到参数：'+param0)}\n greet(param0)"
   },
   {
-    "className": "Test",
+    "className": "Main",
     "methodName": "doTest",
     "ifStatic": false,
     "bit": 1,
@@ -32,7 +32,7 @@
     "pattern": "def greet(param0,param1) {System.out.println('进入到方法：private  void doTest(String),获取到参数：'+param0+','+param1)}\n greet(param0,param1)"
   },
   {
-    "className": "Test",
+    "className": "Main",
     "methodName": "doTest",
     "ifStatic": false,
     "bit": 0,
