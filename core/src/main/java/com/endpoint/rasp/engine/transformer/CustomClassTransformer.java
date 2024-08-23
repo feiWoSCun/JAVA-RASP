@@ -1,12 +1,11 @@
 package com.endpoint.rasp.engine.transformer;
 
-import com.endpoint.rasp.engine.RaspBootstrap;
-import com.endpoint.rasp.engine.common.annotation.AnnotationScanner;
-import com.endpoint.rasp.engine.common.annotation.HookAnnotation;
-import com.endpoint.rasp.engine.common.log.ErrorType;
-import com.endpoint.rasp.engine.common.log.LogTool;
-import com.endpoint.rasp.engine.hook.AbstractClassHook;
-import com.sun.org.apache.xerces.internal.impl.dv.util.Base64;
+import com.endpoint.rasp.CheckerContext;
+import com.endpoint.rasp.Rule;
+import com.endpoint.rasp.common.ErrorType;
+import com.endpoint.rasp.common.LogTool;
+import com.endpoint.rasp.engine.EngineBoot;
+import com.endpoint.rasp.engine.hook.GenerateContextHook;
 import javassist.ClassClassPath;
 import javassist.ClassPool;
 import javassist.CtClass;
@@ -14,16 +13,16 @@ import javassist.LoaderClassPath;
 import org.apache.log4j.Logger;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
-import java.lang.ref.SoftReference;
+import java.net.URISyntaxException;
+import java.security.CodeSource;
 import java.security.ProtectionDomain;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 自定义类字节码转换器，用于hook类的方法
@@ -33,33 +32,44 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class CustomClassTransformer implements ClassFileTransformer {
     public static final Logger LOGGER = Logger.getLogger(CustomClassTransformer.class.getName());
-    private static final String SCAN_ANNOTATION_PACKAGE = "com.endpoint.rasp.engine.hook";
-    private static final HashSet<String> jspClassLoaderNames = new HashSet<>();
-    public static ConcurrentHashMap<String, SoftReference<ClassLoader>> jspClassLoaderCache = new ConcurrentHashMap<String, SoftReference<ClassLoader>>();
 
+    //true 已经卸载，false已经安装
+    private volatile boolean loadFlag = true;
     private final Instrumentation inst;
-    private final HashSet<AbstractClassHook> hooks = new HashSet<AbstractClassHook>();
 
-    static {
-        jspClassLoaderNames.add("org.apache.jasper.servlet.JasperLoader");
-        jspClassLoaderNames.add("com.caucho.loader.DynamicClassLoader");
-        jspClassLoaderNames.add("com.ibm.ws.jsp.webcontainerext.JSPExtensionClassLoader");
-        jspClassLoaderNames.add("weblogic.servlet.jsp.JspClassLoader");
-        jspClassLoaderNames.add("com.tongweb.jasper.servlet.JasperLoader");
+    private List<Rule> recombinationCheckContainer;
+    private Set<String> ruleOfClassNames;
+
+    public boolean getLoadFlag() {
+        return loadFlag;
     }
+
 
     public CustomClassTransformer(Instrumentation inst) {
         this.inst = inst;
+        loadFlag = true;
         inst.addTransformer(this, true);
-        addAnnotationHook();
+        getRules();
+        getRuleOfClassNames();
+    }
+
+    private void getRuleOfClassNames() {
+        this.ruleOfClassNames = this.recombinationCheckContainer.stream().map(Rule::getClassName).collect(Collectors.toSet());
+
     }
 
     public void release() {
-        LOGGER.debug("custom class transformer release");
-        //移除当前的transformer。重新加载的类将不会被应用这个transformer
-        inst.removeTransformer(this);
+
+        if (!loadFlag) {
+            LogTool.info("【rasp】卸载失败，可能rasp已经执行过卸载");
+        }
+        LOGGER.debug("【rasp】开始卸载rasp");
+        loadFlag = false;
         //再次执行
         retransformHooks();
+        //移除当前的transformer。重新加载的类将不会被应用这个transformer
+        inst.removeTransformer(this);
+
     }
 
     /**
@@ -73,11 +83,10 @@ public class CustomClassTransformer implements ClassFileTransformer {
                 //确定类是否可被修改
                 if (inst.isModifiableClass(clazz) && !clazz.getName().startsWith("java.lang.invoke.LambdaForm")) {
                     try {
-                        LOGGER.debug("retransform class name:" + clazz.getName());
+                        LOGGER.debug("【rasp】重新加载类:" + clazz.getName());
                         // hook已经加载的类，或者是回滚已经加载的类(当转换器还原到默认值，就会执行类的还原)
                         inst.retransformClasses(clazz);
                     } catch (Throwable t) {
-                        t.printStackTrace();
                         LogTool.error(ErrorType.HOOK_ERROR,
                                 "failed to retransform class " + clazz.getName() + ": " + t.getMessage(), t);
                     }
@@ -90,8 +99,8 @@ public class CustomClassTransformer implements ClassFileTransformer {
      * 测试当前已加载的类字节码
      */
     public void testRetransformHook() {
-        Class[] loadedClasses = inst.getAllLoadedClasses();
-        for (Class clazz : loadedClasses) {
+        Class<?>[] loadedClasses = inst.getAllLoadedClasses();
+        for (Class<?> clazz : loadedClasses) {
             //是否匹配待HOOK的类
             if (isClassMatched(clazz.getName().replace(".", "/"))) {
                 //确定类是否可被修改
@@ -102,7 +111,6 @@ public class CustomClassTransformer implements ClassFileTransformer {
                             inst.retransformClasses(clazz);
                         }
                     } catch (Throwable t) {
-                        t.printStackTrace();
                         LogTool.error(ErrorType.HOOK_ERROR,
                                 "failed to retransform class " + clazz.getName() + ": " + t.getMessage(), t);
                     }
@@ -110,6 +118,7 @@ public class CustomClassTransformer implements ClassFileTransformer {
             }
         }
     }
+
     /**
      * 重新加载引擎类,用于升级引擎本身，暂时无效
      */
@@ -117,7 +126,7 @@ public class CustomClassTransformer implements ClassFileTransformer {
 //        Class[] loadedClasses = inst.getAllLoadedClasses();
 //        for (Class clazz : loadedClasses) {
 //            //是否为com.endpoint.rasp.engine包下面的类
-//            if (clazz.getName().contains("engine")&&!clazz.getName().contains("CustomClassTransformer")&&!clazz.getName().contains("RaspBootstrap")&&!clazz.getName().contains("CheckParameter$Type")&&!clazz.getName().contains("ErrorType")&&!clazz.getName().contains("log4j")) {
+//            if (clazz.getName().contains("engine")&&!clazz.getName().contains("CustomClassTransformer")&&!clazz.getName().contains("EngineBoot")&&!clazz.getName().contains("CheckParameter$Type")&&!clazz.getName().contains("ErrorType")&&!clazz.getName().contains("log4j")) {
 //                try {
 ////                    inst.redefineClasses();
 //                    // 刷新clazz
@@ -129,34 +138,27 @@ public class CustomClassTransformer implements ClassFileTransformer {
 //            }
 //        }
 //    }
+    private void getRules() {
+        List<Rule> checkRuleContainer = CheckerContext.getCheckRuleContainer();
 
-    /**
-     * 将注解类名添加到HOOK集合中
-     *
-     * @param hook
-     * @param className
-     */
-    private void addHook(AbstractClassHook hook, String className) {
-        LOGGER.info("loading hook engine " + hook.getType() + " , hook-class name: " + className);
-        hooks.add(hook);
-    }
-
-    /**
-     * 扫描执行HOOK的注解类
-     */
-    private void addAnnotationHook() {
-        Set<Class> classesSet = AnnotationScanner.getClassWithAnnotation(SCAN_ANNOTATION_PACKAGE, HookAnnotation.class);
-        for (Class clazz : classesSet) {
-            try {
-                Object object = clazz.newInstance();
-                if (object instanceof AbstractClassHook) {
-                    addHook((AbstractClassHook) object, clazz.getName());
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                LogTool.error(ErrorType.HOOK_ERROR, "add hook failed: " + e.getMessage(), e);
+        Map<String, Rule> ruleMap = checkRuleContainer.stream().distinct().collect(Collectors.toMap(Rule::getKey, rule -> rule, (rule1, rule2) -> {
+            final TreeSet<Integer> integers = new TreeSet<>();
+            final Rule rule = new Rule();
+            for (int argsIndex : rule1.getArgsIndex()) {
+                integers.add(argsIndex);
             }
-        }
+            for (int argsIndex : rule2.getArgsIndex()) {
+                integers.add(argsIndex);
+            }
+            rule.setBit(rule1.getBit());
+            rule.setArgsIndex(Arrays.stream(integers.toArray(new Integer[0])).mapToInt(Integer::intValue).toArray());
+            rule.setClassName(rule1.getClassName());
+            rule.setPattern(null);
+            rule.setIfStatic(rule1.isIfStatic());
+            rule.setMethodName(rule1.getMethodName());
+            return rule;
+        }));
+        this.recombinationCheckContainer = new ArrayList<>(ruleMap.values());
     }
 
     /**
@@ -164,56 +166,37 @@ public class CustomClassTransformer implements ClassFileTransformer {
      *
      * @see ClassFileTransformer#transform(ClassLoader, String, Class, ProtectionDomain, byte[])
      */
+
+
     @Override
     public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined,
                             ProtectionDomain domain, byte[] classfileBuffer) {
-        if (loader != null && jspClassLoaderNames.contains(loader.getClass().getName())) {
-            jspClassLoaderCache.put(className.replace("/", "."), new SoftReference<>(loader));
+
+        if (!loadFlag) {
+            LogTool.info(loader + "," + className);
+
+            download(classfileBuffer, "/unload", "StandardContext.class", className);
+            return classfileBuffer;
         }
+
         if (className.contains("rasp")) {
             return classfileBuffer;
         }
-        for (final AbstractClassHook hook : hooks) {
-            if (hook.isClassMatched(className)) {
-                //TODO 是否泄露原理
-                LogTool.info("hook class name：" + className);
-                //TODO 需关闭
-                if ("io/undertow/servlet/handlers/ServletHandler".equals(className)) {
-                    try {
-                        System.out.println("hook before(file):\n\r" + new String(Base64.encode(classfileBuffer)));
-                        InputStream iInputStream = loader.getResourceAsStream(className + ".class");
-                        if (iInputStream == null) {
-                            return classfileBuffer;
-                        }
-                        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-                        int nRead;
-                        byte[] data = new byte[1024];
-                        while ((nRead = iInputStream.read(data, 0, data.length)) != -1) {
-                            buffer.write(data, 0, nRead);
-                        }
-                        buffer.flush();
-                        byte[] oldClassFileBytes = buffer.toByteArray();
-                        System.out.println("hook before(in memory):\n\r" + new String(Base64.encode(oldClassFileBytes)));
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
+        for (final Rule rule : recombinationCheckContainer) {
+            if (className.equals(rule.getClassName())) {
+                if ("org/apache/catalina/core/StandardContext".equals(className)) {
+                    download(classfileBuffer, "/before-load", "StandardContext.class", className);
                 }
                 CtClass ctClass = null;
                 try {
                     ClassPool classPool = new ClassPool();
                     addLoader(classPool, loader);
                     ctClass = classPool.makeClass(new ByteArrayInputStream(classfileBuffer));
-                /*    if (loader == null) {
-                        //没有指定构造器，则使用boot构造器
-                        hook.setLoadedByBootstrapLoader(true);
-                    }*/
-                    classfileBuffer = hook.transformClass(ctClass);
-                    //TODO 需关闭
-                    if ("io/undertow/servlet/handlers/ServletHandler".equals(className)) {
-                        System.out.println("hook after:\n\r" + new String(Base64.encode(classfileBuffer)));
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
+                    classfileBuffer = GenerateContextHook.doHook(ctClass, rule.getKey(),"defaultCheckEnter", rule.getMethodName(),
+                            rule.getArgsIndex(), rule.getDesc(), rule.isIfStatic());
+                    download(classfileBuffer, "/after-load", "StandardContext.class", className);
+                } catch (IOException ignored) {
+
                 } finally {
                     if (ctClass != null) {
                         ctClass.detach();
@@ -226,31 +209,62 @@ public class CustomClassTransformer implements ClassFileTransformer {
     }
 
     /**
+     * debug用，用来检测是否完成了字节码插桩
+     *
+     * @param bytes
+     * @param dir
+     * @param filePath
+     * @param name
+     */
+    public void download(byte[] bytes, String dir, String filePath, String name) {
+
+
+        if (!"org/apache/catalina/core/StandardContext".equals(name)) {
+            return;
+
+        }
+        try {
+            CodeSource codeSource = this.getClass().getProtectionDomain().getCodeSource();
+            File path;
+            path = new File(codeSource.getLocation().toURI().getSchemeSpecificPart());
+
+            path = new File(path.getParentFile().getAbsolutePath() + dir);
+            boolean mkdirs = path.mkdirs();
+            path = new File(path, filePath);
+            boolean newFile = path.createNewFile();
+            try (FileOutputStream fos = new FileOutputStream(path)) {
+
+                fos.write(bytes);
+                LogTool.info("Byte array has been written to the file: " + filePath);
+            } catch (IOException e) {
+                System.err.println("An error occurred while writing the byte array to the file.");
+                LogTool.error(ErrorType.PLUGIN_ERROR, "下载失败", e);
+
+            }
+        } catch (URISyntaxException | IOException e) {
+            System.err.println("An error occurred while creating the directory.");
+            LogTool.error(ErrorType.PLUGIN_ERROR, "下载失败", e);
+            return; // 如果目录创建失败，退出程序
+        }
+    }
+
+    /**
      * 是否是需要HOOK的类
      *
      * @param className
      * @return
      */
     public boolean isClassMatched(String className) {
-        for (final AbstractClassHook hook : getHooks()) {
-            if (hook.isClassMatched(className)) {
-                return true;
-            }
-        }
-        return false;
-//        return serverDetector.isClassMatched(className);
+        return ruleOfClassNames.contains(className);
     }
 
     private void addLoader(ClassPool classPool, ClassLoader loader) {
         classPool.appendSystemPath();
-        classPool.appendClassPath(new ClassClassPath(RaspBootstrap.class));
+        classPool.appendClassPath(new ClassClassPath(EngineBoot.class));
         if (loader != null) {
             classPool.appendClassPath(new LoaderClassPath(loader));
         }
     }
 
-    public HashSet<AbstractClassHook> getHooks() {
-        return hooks;
-    }
 
 }

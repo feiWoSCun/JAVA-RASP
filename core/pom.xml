@@ -24,9 +24,19 @@
             <version>fei-1.0</version>
         </dependency>
         <dependency>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-            <version>1.2.17</version>
+            <groupId>com.endpoint.rasp</groupId>
+            <artifactId>msg</artifactId>
+            <version>fei-1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.endpoint.rasp</groupId>
+            <artifactId>checker-spi</artifactId>
+            <version>fei-1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.zeromq</groupId>
+            <artifactId>jeromq</artifactId>
+            <version>0.6.0</version>
         </dependency>
         <dependency>
             <groupId>org.javassist</groupId>
@@ -37,6 +47,11 @@
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
             <version>2.8.9</version>
+        </dependency>
+        <dependency>
+            <groupId>com.endpoint.rasp</groupId>
+            <artifactId>checker-impl</artifactId>
+            <version>fei-1.0</version>
         </dependency>
     </dependencies>
     <build>
@@ -60,11 +75,11 @@
                                         implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <mainClass>com.endpoint.rasp.engine.Core</mainClass>
                                     <manifestEntries>
-                                        <Created-By>core engine team, middleware group, alibaba inc.</Created-By>
+                                        <Created-By>feiwoscun</Created-By>
                                         <Implementation-Version>${project.version}</Implementation-Version>
-                                        <Implementation-Vendor-Id>com.taobao.arthas</Implementation-Vendor-Id>
+                                        <Implementation-Vendor-Id>com.feiwoscun</Implementation-Vendor-Id>
                                         <Specification-Version>${project.version}</Specification-Version>
-                                        <Specification-Title>arthas-core</Specification-Title>
+                                        <Specification-Title>core</Specification-Title>
                                     </manifestEntries>
                                 </transformer>
                             </transformers>
@@ -80,6 +95,10 @@
                                 <relocation>
                                     <pattern>javassist</pattern>
                                     <shadedPattern>com.endpoint.rasp.javassist</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>org.zeromq</pattern>
+                                    <shadedPattern>com.endpoint.rasp.zeromq</shadedPattern>
                                 </relocation>
                             </relocations>
                         </configuration>

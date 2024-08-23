@@ -1,7 +1,7 @@
 package com.endpoint.rasp.engine.hook;
 
-import com.endpoint.rasp.engine.common.log.ErrorType;
-import com.endpoint.rasp.engine.common.log.LogTool;
+import com.endpoint.rasp.common.ErrorType;
+import com.endpoint.rasp.common.LogTool;
 import javassist.*;
 import org.apache.log4j.Logger;
 
@@ -41,17 +41,17 @@ public abstract class AbstractClassHook {
      *
      * @param ctClass 目标类
      */
-    protected abstract void hookMethod(CtClass ctClass) throws IOException, CannotCompileException, NotFoundException;
+    protected abstract void hookMethod(CtClass ctClass, String key,String checkMethodName, String methodName, int[] argsIndex,String desc, boolean ifStatic) throws IOException, CannotCompileException, NotFoundException;
 
     /**
-     * 转化目标类
-     *
-     * @param ctClass 待转化的类
-     * @return 转化之后类的字节码数组
+     * @param ctClass
+     * @param checkMethodName 需要调用的抓换函数
+     * @param methodName
+     * @return
      */
-    public byte[] transformClass(CtClass ctClass) {
+    public byte[] transformClass(CtClass ctClass ,String key, String checkMethodName, String methodName,  int[] argsIndex,String desc, boolean ifStatic) throws NotFoundException, CannotCompileException {
         try {
-            hookMethod(ctClass);
+            hookMethod(ctClass,  key,checkMethodName, methodName, argsIndex,desc, ifStatic);
             return ctClass.toBytecode();
         } catch (Throwable e) {
             LOGGER.info("transform class " + ctClass.getName() + " failed", e);
@@ -98,7 +98,7 @@ public abstract class AbstractClassHook {
             throws NotFoundException, CannotCompileException {
 
         LinkedList<CtBehavior> methods = getMethod(ctClass, methodName, desc, null);
-        if (methods != null && methods.size() > 0) {
+        if (methods != null && !methods.isEmpty()) {
             insertBefore(methods, src);
         } else {
             LOGGER.info("can not find method " + methodName + " " + desc + " in class " + ctClass.getName());
@@ -205,8 +205,8 @@ public abstract class AbstractClassHook {
         if ("<init>".equals(methodName)) {
             return getConstructor(ctClass, desc);
         }
-        LinkedList<CtBehavior> methods = new LinkedList<CtBehavior>();
-        if (desc==null||desc.isEmpty()) {
+         LinkedList<CtBehavior> methods = new LinkedList<CtBehavior>();
+        if (desc == null || desc.isEmpty()) {
             CtMethod[] allMethods = ctClass.getDeclaredMethods();
             if (allMethods != null) {
                 for (CtMethod method : allMethods) {
@@ -287,39 +287,31 @@ public abstract class AbstractClassHook {
     public String getInvokeStaticSrc(Class invokeClass, String methodName, String paramString, Class... parameterTypes) {
         String src;
         String invokeClassName = invokeClass.getName();
-
-        String parameterTypesString = "";
-        if (parameterTypes != null && parameterTypes.length > 0) {
-            for (Class parameterType : parameterTypes) {
-                if (parameterType.getName().startsWith("[")) {
-                    parameterTypesString += "Class.forName(\"" + parameterType.getName() + "\"),";
-                } else {
-                    parameterTypesString += (parameterType.getName() + ".class,");
-                }
-            }
-            parameterTypesString = parameterTypesString.substring(0, parameterTypesString.length() - 1);
-        }
-        if ("".equals(parameterTypesString)) {
-            parameterTypesString = null;
-        } else {
-            parameterTypesString = "new Class[]{" + parameterTypesString + "}";
-        }
+        //写死了
+        StringBuilder parameterTypesString = new StringBuilder("String.class" + "," + "Object[].class");
+        parameterTypesString = new StringBuilder("new Class[]{" + parameterTypesString + "}");
         //默认都是当前的类加载器
-        if (isLoadedByBootstrapLoader) {
-            src = "com.endpoint.rasp.ModuleLoader.moduleClassLoader.loadClass(\"" + invokeClassName + "\").getMethod(\"" + methodName +
-                    "\"," + parameterTypesString + ").invoke(null";
-            if (paramString!=null&&!paramString.isEmpty()) {
-                src += (",new Object[]{" + paramString + "});");
-            } else {
-                src += ",null);";
-            }
-            src = "try {System.out.print(1);" + src + "} catch (Throwable t) {if(t.getCause() != null && t.getCause().getClass()" +
-                    ".getName().equals(\"com.endpoint.rasp.engine.common.exception.SecurityException\")){throw t;}}";
+        src = "com.endpoint.rasp.common.ClassloaderUtil.getRaspClassLoader().loadClass(\"" + invokeClassName + "\").getMethod(\"" + methodName +
+                "\"," + parameterTypesString + ").invoke(null,";
+        if (paramString.contains("$")) {
+            src += paramString;
+            src += ");";
         } else {
-            src = invokeClassName + '.' + methodName + "(" + paramString + ");";
-            src = "try {System.out.print(1);" + src + "} catch (Throwable t) {if(t.getClass()" +
-                    ".getName().equals(\"com.endpoint.rasp.engine.common.exception.SecurityException\")){throw t;}}";
+            src += "null);";
         }
+        src = "try {System.out.println(\"begin hook\");" + src + "} catch (Throwable t) {if(t.getCause() != null && t.getCause().getClass()" +
+                ".getName().equals(\"com.endpoint.rasp.engine.common.exception.SecurityException\")){throw t;}}";
+
+
+/*        try {System.out.print("开始进行内存马检测");
+            com.endpoint.rasp.common.ClassloaderUtil.getRaspClassLoader().loadClass("com.endpoint.rasp.engine.hook.GenerateContextHook").
+                    getMethod("defaultCheckEnter",new Class[]{String.class,Object[].class}).
+                    invoke(null,"addServletMappingDecoded",new Object[]{$0,$1,$2,$3});
+        }catch (Throwable t)
+        {if(t.getCause() != null && t.getCause().getClass().getName().equals("com.endpoint.rasp.engine.common.exception.SecurityException"))
+        {
+            throw t;}}*/
         return src;
     }
+
 }

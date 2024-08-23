@@ -1,0 +1,38 @@
+[
+  {
+    "className": "org/apache/catalina/core/StandardContext",
+    "methodName": "addServletMappingDecoded",
+    "ifStatic": false,
+    "bit": 3,
+    "argsIndex": [0,1,2],
+    "desc": "(Ljava/lang/String;Ljava/lang/String;Z)V",
+    "pattern": "def greet(name) {return 'fewoscun,rasp:'+param0 }\n greet(param0)"
+  },
+  {
+    "className": "org/apache/catalina/core/StandardContext",
+    "methodName": "addServletMappingDecoded",
+    "ifStatic": false,
+    "bit": 3,
+    "argsIndex": [0,1,2],
+    "desc": "(Ljava/lang/String;Ljava/lang/String;Z)V",
+    "pattern": "def greet(name) {return 'fewoscun,rasp:'+param1 }\n greet(param1)"
+  },
+  {
+    "className": "org/apache/catalina/core/StandardContext",
+    "methodName": "addServletMappingDecoded",
+    "ifStatic": false,
+    "bit": 3,
+    "argsIndex": [0,1,2],
+    "desc": "(Ljava/lang/String;Ljava/lang/String;Z)V",
+    "pattern": "def greet(name) {return 'fewoscun,rasp:'+param2 }\n greet(param2)"
+  },
+  {
+    "className": "org/apache/catalina/core/abaaba",
+    "methodName": "addServletMappingDecoded",
+    "ifStatic": false,
+    "bit": 3,
+    "argsIndex": [0,1,2],
+    "desc": "(Ljava/lang/String;Ljava/lang/String;Z)V",
+    "pattern": "def greet(name) {return 'fewoscun,rasp:'+param2 }\n greet(param2)"
+  }
+]

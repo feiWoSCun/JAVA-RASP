@@ -10,7 +10,11 @@
     <name>common</name>
     <packaging>jar</packaging>
     <dependencies>
-
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>1.2.17</version>
+        </dependency>
     </dependencies>
     <build>
         <finalName>common</finalName>

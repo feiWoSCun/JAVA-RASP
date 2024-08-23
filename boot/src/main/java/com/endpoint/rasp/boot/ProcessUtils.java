@@ -10,6 +10,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+
+
 /**
  * @author: feiwoscun
  * @date: 2024/6/9
@@ -81,7 +83,7 @@ public class ProcessUtils {
         return FOUND_JAVA_HOME;
     }
 
-    public static void startArthasCore(String targetPid, List<String> commands) {
+    public static void startRaspCore(List<String> commands) {
         // find java/java.exe, then try to find tools.jar
         String javaHome = findJavaHome();
 
@@ -106,21 +108,8 @@ public class ProcessUtils {
         if (toolsJar != null && toolsJar.exists()) {
             command.add("-Xbootclasspath/a:" + toolsJar.getAbsolutePath());
         }
-
-        // "${JAVA_HOME}"/bin/java \
-        // ${opts} \
-        // -jar "${arthas_lib_dir}/arthas-core.jar" \
-        // -pid ${TARGET_PID} \
-        // -target-ip ${TARGET_IP} \
-        // -telnet-port ${TELNET_PORT} \
-        // -http-port ${HTTP_PORT} \
-        // -core "${arthas_lib_dir}/arthas-core.jar" \
-        // -agent "${arthas_lib_dir}/arthas-agent.jar"
         command.addAll(commands);
         ProcessBuilder pb = new ProcessBuilder(command);
-        // https://github.com/alibaba/arthas/issues/2166
-        command.add("-pid");
-        command.add(targetPid);
         pb.environment().put("JAVA_TOOL_OPTIONS", "");
         try {
             final Process proc = pb.start();
@@ -150,7 +139,7 @@ public class ProcessUtils {
 
             int exitValue = proc.exitValue();
             if (exitValue != 0) {
-                AnsiLog.error("attach fail, targetPid: " + targetPid);
+                AnsiLog.error("attach fail, targetPid: " + commands.get(commands.size() - 1));
                 System.exit(1);
             }
         } catch (Throwable e) {

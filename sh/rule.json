@@ -1,0 +1,43 @@
+[
+  {
+    "className": "Test",
+    "methodName": "doTest1",
+    "ifStatic": true,
+    "bit": 0,
+    "argsIndex": [],
+    "desc": "()V",
+    "pattern": "def greet() {System.out.println('进入到方法：private static void doTest(),获取到参数：')}\n greet()"
+  },
+  {
+    "className": "Test",
+    "methodName": "doTest1",
+    "ifStatic": true,
+    "bit": 1,
+    "argsIndex": [
+      1
+    ],
+    "desc": "(Ljava/lang/String;)V",
+    "pattern": "def greet(param0) {System.out.println('进入到方法：private static void doTest(String) ,获取到参数：'+param0)}\n greet(param0)"
+  },
+  {
+    "className": "Test",
+    "methodName": "doTest",
+    "ifStatic": false,
+    "bit": 1,
+    "argsIndex": [
+      0,
+      1
+    ],
+    "desc": "(Ljava/lang/String;)V",
+    "pattern": "def greet(param0,param1) {System.out.println('进入到方法：private  void doTest(String),获取到参数：'+param0+','+param1)}\n greet(param0,param1)"
+  },
+  {
+    "className": "Test",
+    "methodName": "doTest",
+    "ifStatic": false,
+    "bit": 0,
+    "argsIndex": null,
+    "desc": "()V",
+    "pattern":"def greet(param0) {System.out.println('进入到方法：private  void doTest(),获取到参数：'+param0)}\n greet(param0)"
+  }
+]
