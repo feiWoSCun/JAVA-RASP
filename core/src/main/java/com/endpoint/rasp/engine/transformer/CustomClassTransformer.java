@@ -175,26 +175,26 @@ public class CustomClassTransformer implements ClassFileTransformer {
         if (!loadFlag) {
             LogTool.info(loader + "," + className);
 
-            download(classfileBuffer, "/unload", "StandardContext.class", className);
+            download(classfileBuffer, "/unload", "Main.class", className);
             return classfileBuffer;
         }
 
-        if (className.contains("rasp")) {
+        //后面的判断是做测试用
+        if (className.contains("rasp") && !className.contains("com/endpoint/rasp/Main")) {
             return classfileBuffer;
         }
         for (final Rule rule : recombinationCheckContainer) {
             if (className.equals(rule.getClassName())) {
-                if ("org/apache/catalina/core/StandardContext".equals(className)) {
-                    download(classfileBuffer, "/before-load", "StandardContext.class", className);
-                }
+                    download(classfileBuffer, "/before-load", "Main.class", className);
+
                 CtClass ctClass = null;
                 try {
                     ClassPool classPool = new ClassPool();
                     addLoader(classPool, loader);
                     ctClass = classPool.makeClass(new ByteArrayInputStream(classfileBuffer));
-                    classfileBuffer = GenerateContextHook.doHook(ctClass, rule.getKey(),"defaultCheckEnter", rule.getMethodName(),
+                    classfileBuffer = GenerateContextHook.doHook(ctClass, rule.getKey(), "defaultCheckEnter", rule.getMethodName(),
                             rule.getArgsIndex(), rule.getDesc(), rule.isIfStatic());
-                    download(classfileBuffer, "/after-load", "StandardContext.class", className);
+                    download(classfileBuffer, "/after-load", "Main.class", className);
                 } catch (IOException ignored) {
 
                 } finally {
